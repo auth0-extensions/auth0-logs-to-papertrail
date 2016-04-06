@@ -30,7 +30,7 @@
       "required": true
     },
     "PAPERTRAIL_SYSTEM": {
-      "description": "Papertrail SYSTEM",
+      "description": "Papertrail System",
       "default": "auth0-logs"
     },
     "LOG_LEVEL": {

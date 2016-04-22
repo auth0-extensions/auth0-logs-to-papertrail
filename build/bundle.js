@@ -1,7 +1,2296 @@
-module.exports=function(t){function e(n){if(r[n])return r[n].exports;var i=r[n]={exports:{},id:n,loaded:!1};return t[n].call(i.exports,i,i.exports,e),i.loaded=!0,i.exports}var r={};return e.m=t,e.c=r,e.p="/build/",e(0)}([function(t,e,r){(function(e){"use strict";function n(t,r){var n=t.webtaskContext,u=["AUTH0_DOMAIN","AUTH0_CLIENT_ID","AUTH0_CLIENT_SECRET","PAPERTRAIL_HOST","PAPERTRAIL_PORT"],l=u.filter(function(t){return!n.data[t]});return l.length?r.status(400).send({message:"Missing settings: "+l.join(", ")}):void t.webtaskContext.storage.get(function(u,l){var c="undefined"==typeof l?null:l.checkpointId,h=new o({domain:n.data.AUTH0_DOMAIN,clientID:n.data.AUTH0_CLIENT_ID,clientSecret:n.data.AUTH0_CLIENT_SECRET}),p=new i.Logger({transports:[new i.transports.Papertrail({host:n.data.PAPERTRAIL_HOST,port:n.data.PAPERTRAIL_PORT,hostname:n.data.PAPERTRAIL_SYSTEM||"auth0-logs"})]});s.waterfall([function(t){h.getAccessToken(function(e){return e&&console.log("Error authenticating:",e),t(e)})},function(t){var r=function n(r){console.log("Downloading logs from: "+(r.checkpointId||"Start")+"."),r.logs=r.logs||[],h.logs.getAll({take:200,from:r.checkpointId},function(i,o){return i?t(i):o&&o.length?(o.forEach(function(t){return r.logs.push(t)}),r.checkpointId=r.logs[r.logs.length-1]._id,e(function(){return n(r)})):(console.log("Total logs: "+r.logs.length+"."),t(null,r))})};r({checkpointId:c})},function(t,e){var r=parseInt(n.data.LOG_LEVEL)||0,i=function(t){return f[t.type]?f[t.type].level>=r:!0},o=n.data.LOG_TYPES&&n.data.LOG_TYPES.split(",")||[],s=function(t){return o&&o.length?t.type&&o.indexOf(t.type)>=0:!0};t.logs=t.logs.filter(function(t){return"sapi"!==t.type&&"fapi"!==t.type}).filter(i).filter(s),console.log("Filtered logs on log level '"+r+"': "+t.logs.length+"."),n.data.LOG_TYPES&&console.log("Filtered logs on '"+n.data.LOG_TYPES+"': "+t.logs.length+"."),e(null,t)},function(t,e){console.log("Uploading blobs..."),s.eachLimit(t.logs,5,function(t,e){var r=a(t.date),n=r.format("YYYY/MM/DD")+"/"+r.format("HH")+"/"+t._id+".json";console.log("Uploading "+n+"."),p.info(JSON.stringify(t),e)},function(r){return r?e(r):(console.log("Upload complete."),e(null,t))})}],function(e,n){return e?(console.log("Job failed."),t.webtaskContext.storage.set({checkpointId:c},{force:1},function(t){return t?r.status(500).send(t):void r.status(500).send({error:e})})):(console.log("Job complete."),t.webtaskContext.storage.set({checkpointId:n.checkpointId,totalLogsProcessed:n.logs.length},{force:1},function(t){return t?r.status(500).send(t):void r.sendStatus(200)}))})})}var i=r(3),o=r(4),s=r(5),a=r(6),u=(r(7),r(8)),l=r(9),c=u();r(12).Papertrail;var f={s:{event:"Success Login",level:1},seacft:{event:"Success Exchange",level:1},feacft:{event:"Failed Exchange",level:3},f:{event:"Failed Login",level:3},w:{event:"Warnings During Login",level:2},du:{event:"Deleted User",level:1},fu:{event:"Failed Login (invalid email/username)",level:3},fp:{event:"Failed Login (wrong password)",level:3},fc:{event:"Failed by Connector",level:3},fco:{event:"Failed by CORS",level:3},con:{event:"Connector Online",level:1},coff:{event:"Connector Offline",level:3},fcpro:{event:"Failed Connector Provisioning",level:4},ss:{event:"Success Signup",level:1},fs:{event:"Failed Signup",level:3},cs:{event:"Code Sent",level:0},cls:{event:"Code/Link Sent",level:0},sv:{event:"Success Verification Email",level:0},fv:{event:"Failed Verification Email",level:0},scp:{event:"Success Change Password",level:1},fcp:{event:"Failed Change Password",level:3},sce:{event:"Success Change Email",level:1},fce:{event:"Failed Change Email",level:3},scu:{event:"Success Change Username",level:1},fcu:{event:"Failed Change Username",level:3},scpn:{event:"Success Change Phone Number",level:1},fcpn:{event:"Failed Change Phone Number",level:3},svr:{event:"Success Verification Email Request",level:0},fvr:{event:"Failed Verification Email Request",level:3},scpr:{event:"Success Change Password Request",level:0},fcpr:{event:"Failed Change Password Request",level:3},fn:{event:"Failed Sending Notification",level:3},sapi:{event:"API Operation"},fapi:{event:"Failed API Operation"},limit_wc:{event:"Blocked Account",level:4},limit_ui:{event:"Too Many Calls to /userinfo",level:4},api_limit:{event:"Rate Limit On API",level:4},sdu:{event:"Successful User Deletion",level:1},fdu:{event:"Failed User Deletion",level:3}};c.get("/",n),c.post("/",n),t.exports=l.fromExpress(c)}).call(e,r(1).setImmediate)},function(t,e,r){(function(t,n){function i(t,e){this._id=t,this._clearFn=e}var o=r(2).nextTick,s=Function.prototype.apply,a=Array.prototype.slice,u={},l=0;e.setTimeout=function(){return new i(s.call(setTimeout,window,arguments),clearTimeout)},e.setInterval=function(){return new i(s.call(setInterval,window,arguments),clearInterval)},e.clearTimeout=e.clearInterval=function(t){t.close()},i.prototype.unref=i.prototype.ref=function(){},i.prototype.close=function(){this._clearFn.call(window,this._id)},e.enroll=function(t,e){clearTimeout(t._idleTimeoutId),t._idleTimeout=e},e.unenroll=function(t){clearTimeout(t._idleTimeoutId),t._idleTimeout=-1},e._unrefActive=e.active=function(t){clearTimeout(t._idleTimeoutId);var e=t._idleTimeout;e>=0&&(t._idleTimeoutId=setTimeout(function(){t._onTimeout&&t._onTimeout()},e))},e.setImmediate="function"==typeof t?t:function(t){var r=l++,n=arguments.length<2?!1:a.call(arguments,1);return u[r]=!0,o(function(){u[r]&&(n?t.apply(null,n):t.call(null),e.clearImmediate(r))}),r},e.clearImmediate="function"==typeof n?n:function(t){delete u[t]}}).call(e,r(1).setImmediate,r(1).clearImmediate)},function(t,e){function r(){l=!1,s.length?u=s.concat(u):c=-1,u.length&&n()}function n(){if(!l){var t=setTimeout(r);l=!0;for(var e=u.length;e;){for(s=u,u=[];++c<e;)s&&s[c].run();c=-1,e=u.length}s=null,l=!1,clearTimeout(t)}}function i(t,e){this.fun=t,this.array=e}function o(){}var s,a=t.exports={},u=[],l=!1,c=-1;a.nextTick=function(t){var e=new Array(arguments.length-1);if(arguments.length>1)for(var r=1;r<arguments.length;r++)e[r-1]=arguments[r];u.push(new i(t,e)),1!==u.length||l||setTimeout(n,0)},i.prototype.run=function(){this.fun.apply(null,this.array)},a.title="browser",a.browser=!0,a.env={},a.argv=[],a.version="",a.versions={},a.on=o,a.addListener=o,a.once=o,a.off=o,a.removeListener=o,a.removeAllListeners=o,a.emit=o,a.binding=function(t){throw new Error("process.binding is not supported")},a.cwd=function(){return"/"},a.chdir=function(t){throw new Error("process.chdir is not supported")},a.umask=function(){return 0}},function(t,e){t.exports=require("winston")},function(t,e){t.exports=require("auth0")},function(t,e){t.exports=require("async")},function(t,e){t.exports=require("moment")},function(t,e){t.exports=require("useragent")},function(t,e){t.exports=require("express")},function(t,e,r){function n(t){return function(e,r,n){var i=s(r.x_wt.jtn);return r.originalUrl=r.url,r.url=r.url.replace(i,"/"),r.webtaskContext=a(e),t(r,n)}}function i(t){var e;return t.ext("onRequest",function(t,r){var n=s(t.x_wt.jtn);t.setUrl(t.url.replace(n,"/")),t.webtaskContext=e}),function(r,n,i){var o=t._dispatch();e=a(r),o(n,i)}}function o(t){return function(e,r,n){var i=s(r.x_wt.jtn);return r.originalUrl=r.url,r.url=r.url.replace(i,"/"),r.webtaskContext=a(e),t.emit("request",r,n)}}function s(t){var e="^/api/run/[^/]+/",r="(?:[^/?#]*/?)?";return new RegExp(e+(t?r:""))}function a(t){function e(t,e,n){var i=r(10);"function"==typeof e&&(n=e,e={}),n(i.preconditionFailed("Storage is not available in this context"))}function n(e,n,i){var o=r(10),s=r(11);"function"==typeof n&&(i=n,n={}),s({uri:t.secrets.EXT_STORAGE_URL,method:"GET",headers:n.headers||{},qs:{path:e},json:!0},function(t,e,r){return t?i(o.wrap(t,502)):404===e.statusCode&&Object.hasOwnProperty.call(n,"defaultValue")?i(null,n.defaultValue):e.statusCode>=400?i(o.create(e.statusCode,r&&r.message)):void i(null,r)})}function i(t,e,n,i){var o=r(10);"function"==typeof n&&(i=n,n={}),i(o.preconditionFailed("Storage is not available in this context"))}function o(e,n,i,o){var s=r(10),a=r(11);"function"==typeof i&&(o=i,i={}),a({uri:t.secrets.EXT_STORAGE_URL,method:"PUT",headers:i.headers||{},qs:{path:e},body:n},function(t,e,r){return t?o(s.wrap(t,502)):e.statusCode>=400?o(s.create(e.statusCode,r&&r.message)):void o(null)})}return t.read=t.secrets.EXT_STORAGE_URL?n:e,t.write=t.secrets.EXT_STORAGE_URL?o:i,t}e.fromConnect=e.fromExpress=n,e.fromHapi=i,e.fromServer=e.fromRestify=o},function(t,e){t.exports=require("boom")},function(t,e){t.exports=require("request")},function(t,e,r){var n=r(13),i=r(14),o=r(15),s=r(16).Produce,a=r(23),u=r(3),l=e.Papertrail=function(t){function e(){function t(){u.stream.on("error",r),u.stream.on("end",e)}if(!u._shutdown&&!u._erroring)try{if(u.disableTls)u.stream=i.createConnection(u.port,u.host,a),u.stream.setKeepAlive(!0,u._KEEPALIVE_INTERVAL),t();else{var n=i.createConnection(u.port,u.host,function(){n.setKeepAlive(!0,u._KEEPALIVE_INTERVAL),u.stream=o.connect({socket:n,rejectUnauthorized:!1},a),t()});n.on("error",r)}}catch(s){r(s)}}function r(t){u._erroring=!0,u.emit("error",t),setTimeout(function(){u.currentRetries++,u.totalRetries++,u.connectionDelay<u.maxDelayBetweenReconnection&&u.currentRetries>=u.attemptsBeforeDecay&&(u.connectionDelay=2*u.connectionDelay,u.currentRetries=0),u.loggingEnabled&&u.totalRetries>=u.maximumAttempts&&(u.loggingEnabled=!1,u.emit("error",new Error("Max entries eclipsed, disabling buffering"))),u._erroring=!1,e()},u.connectionDelay)}function a(){u.loggingEnabled=!0,u.currentRetries=0,u.totalRetries=0,u.connectionDelay=t.connectionDelay||1e3,u.emit("connect","Connected to Papertrail at "+u.host+":"+u.port),u.buffer.length>0&&(u.stream.write(u.buffer),u.buffer="")}var u=this;if(u._KEEPALIVE_INTERVAL=15e3,t=t||{},u.name="Papertrail",u.level=t.level||"info",u.host=t.host,u.port=t.port,u.disableTls="boolean"==typeof t.disableTls?t.disableTls:!1,u.hostname=t.hostname||n.hostname(),u.program=t.program||"default",u.facility=t.facility||"daemon",u.colorize=t.colorize||!1,u.logFormat=t.logFormat||function(t,e){return t+" "+e},u.attemptsBeforeDecay=t.attemptsBeforeDecay||5,u.maximumAttempts=t.maximumAttempts||25,u.connectionDelay=t.connectionDelay||1e3,u.handleExceptions=t.handleExceptions||!1,u.maxDelayBetweenReconnection=t.maxDelayBetweenReconnection||6e4,u.maxBufferSize=t.maxBufferSize||1048576,u.inlineMeta=t.inlineMeta||!1,u.producer=new s({facility:u.facility}),u.currentRetries=0,u.totalRetries=0,u.buffer="",u.loggingEnabled=!0,u._shutdown=!1,!u.host||!u.port)throw new Error("Missing required parameters: host and port");e()};a.inherits(l,u.Transport),u.transports.Papertrail=l,l.prototype.log=function(t,e,r,n){var i=this;if("function"!=typeof r||n||(n=r,r=!1),r&&"object"==typeof r&&0===Object.keys(r).length&&!a.isError(r)&&(r=!1),!this.loggingEnabled)return n(null,!0);var o=e;"string"!=typeof o&&(o=a.inspect(o,!1,null,i.colorize)),r&&("object"!=typeof r?o+=" "+r:r&&(o+=this.inlineMeta?" "+a.inspect(r,!1,null,i.colorize).replace(/[\n\t]\s*/gm," "):"\n"+a.inspect(r,!1,null,i.colorize))),this.sendMessage(this.hostname,this.program,t,o),n(null,!0)},l.prototype.sendMessage=function(t,e,r,n){var i=this,o=[],s="",a="";o=n?n.split("\n"):[""];for(var l=0;l<o.length&&(0!==o[l].length||l!=o.length-1);l++)1==l&&(a="    "),s+=i.producer.produce({severity:r,host:t,appName:e,date:new Date,message:i.logFormat(i.colorize?u.config.colorize(r):r,a+o[l])})+"\r\n";this.stream&&this.stream.writable?this.stream.write(s):this.loggingEnabled&&this.buffer.length<this.maxBufferSize&&(this.buffer+=s)},l.prototype.close=function(){var t=this;t._shutdown=!0,t.stream?t.stream.end():t.on("connect",function(){t.close()})}},function(t,e){t.exports=require("os")},function(t,e){t.exports=require("net")},function(t,e){t.exports=require("tls")},function(t,e,r){var n=r(17),i=r(18);e.Produce=n,e.Parse=i},function(t,e,r){function n(t){return"number"!=typeof t?t:t=10>t?"0"+t:t}function i(t){t instanceof Date||(t=new Date(Date()));var e=n(t.getHours()),r=n(t.getMinutes()),i=n(t.getSeconds()),o=t.getMonth(),s=t.getDate();return 10>s&&(s=" "+s),c[o]+" "+s+" "+e+":"+r+":"+i}function o(t){t instanceof Date||(t=new Date(Date()));for(var e,r=Math.abs(t.getTimezoneOffset()),i=0;r>=60;)i++,r-=60;return e=t.getTimezoneOffset()<0?"+"+n(i)+":"+n(r):t.getTimezoneOffset()>0?"-"+n(i)+":"+n(r):"Z",formattedDate=t.getUTCFullYear()+"-"+n(t.getUTCMonth()+1)+"-"+n(t.getUTCDate())+"T"+n(t.getUTCHours())+":"+n(t.getUTCMinutes())+":"+n(t.getUTCSeconds())+"."+n(t.getUTCMilliseconds())+e,formattedDate}function s(t){var e={};return"string"!=typeof t.facility||t.facility.match(/^\d+$/)?parseInt(t.facility,10)&&parseInt(t.facility,10)<24&&(e.facility=parseInt(t.facility,10)):e.facility=u[t.facility.toLowerCase()],"string"!=typeof t.severity||t.severity.match(/^\d+$/)?parseInt(t.severity,10)&&parseInt(t.severity,10)<8&&(e.severity=parseInt(t.severity,10)):e.severity=l[t.severity.toLowerCase()],isNaN(e.severity)||isNaN(e.facility)?!1:(e.prival=8*e.facility+e.severity,e.str=t.version?"<"+e.prival+">"+t.version:"<"+e.prival+">",e.str)}function a(t){if("object"!=typeof t)return!1;var e="";for(var r in t){sdElement=t[r],e+="["+r;for(var n in sdElement)sdElement[n]=sdElement[n].toString().replace(/(\]|\\|")/g,"\\$1"),e+=" "+n+'="'+sdElement[n]+'"';e+="]"}return e}var u={kern:0,user:1,mail:2,daemon:3,auth:4,syslog:5,lpr:6,news:7,uucp:8,clock:9,sec:10,ftp:11,ntp:12,audit:13,alert:14,local0:16,local1:17,local2:18,local3:19,local4:20,local5:21,local6:22,local7:23},l={emerg:0,emergency:0,alert:1,crit:2,critical:2,err:3,error:3,warn:4,warning:4,notice:5,info:6,information:6,informational:6,debug:7},c=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],f=function(t){t&&"object"==typeof t&&t.type?this.type=t.type.match(/bsd|3164/i)?"RFC3164":"RFC5424":t&&"string"==typeof t?this.type=t.match(/bsd|3164/i)?"RFC3164":"RFC5424":this.type="RFC5424",t&&t.facility&&u[t.facility]&&(this.facility=t.facility),t&&t.pid&&parseInt(t.pid,10)&&(this.pid=t.pid),t&&t.host&&(this.host=t.host.replace(/\s+/g,"")),t&&t.appName&&(this.appName=t.appName.replace(/\s+/g,"")),t&&t.msgID&&(this.msgID=t.msgID.replace(/\s+/g,""))};f.prototype.produce=function(t,e){t.time instanceof Date&&!t.date&&(t.date=t.time);var r=[];if(!t.date instanceof Date&&(t.date=new Date(Date())),t.facility||(t.facility=this.facility),"RFC5424"==this.type){if(t.hasOwnProperty("prival")&&t.prival>=0&&t.prival<=191)var n="<"+t.prival+">1";else var n=s({facility:t.facility,severity:t.severity,version:1});if(n===!1)return!1;r.push(n),r.push(o(t.date)),r.push(t.host||this.host||"-"),r.push(t.appName||this.appName||"-"),r.push(t.pid||this.pid||"-"),r.push(t.msgID||this.msgID||"-"),t.structuredData?r.push(a(t.structuredData)||"-"):r.push("-"),t.message||(t.message="-")}else if(t.timestamp=i(t.date),r.push(s({facility:t.facility,severity:t.severity})+t.timestamp),r.push(t.host||this.host),r.push(),t.appName||this.appName){var u=t.appName||this.appName,l=t.pid||this.pid;parseInt(l,10)?r.push(u+"["+l+"]:"):r.push(u+":")}var c=r.filter(function(t){return t}).map(function(t){return String(t).trim()}).join(" ");return c+=" "+t.message||"",r.push(c),e?e(c):c},f.prototype.debug=function(t,e){return t.severity="debug",this.produce(t,e)},f.prototype.info=function(t,e){return t.severity="info",this.produce(t,e)},f.prototype.notice=function(t,e){return t.severity="notice",this.produce(t,e)},f.prototype.warn=function(t,e){return t.severity="warn",this.produce(t,e)},f.prototype.crit=function(t,e){return t.severity="crit",this.produce(t,e)},f.prototype.alert=function(t,e){return t.severity="alert",this.produce(t,e)},f.prototype.emergency=function(t,e){return t.severity="emergency",this.produce(t,e)},t.exports=f},function(t,e,r){(function(e){var r=["kern","user","mail","daemon","auth","syslog","lpr","news","uucp","clock","sec","ftp","ntp","audit","alert","clock","local0","local1","local2","local3","local4","local5","local6","local7"],n=["emerg","alert","crit","err","warn","notice","info","debug"],o={Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11},s={hashAlgorithm:[null,"SHA1","SHA256"],keyBlobType:{C:"PKIX Certificate",P:"OpenPGP KeyID",K:"Public Key",N:"No key information",U:"Unknown"}},a=function(){};a.prototype.parse=function(t,r){if("function"==typeof e&&e.isBuffer(t))t=t.toString("utf8",0);else if("string"!=typeof t)return t;var n={originalMessage:t},o=t.split(" ");if(o.length<2)return n;var s=this.decodePri(o[0]);if(s)for(var a in s)n[a]=s[a];var u;if(o[0].match(/^(<\d+>\d)$/)){if(o.shift(),u=o.shift(),n.type="RFC5424",n.time=this.parseTimeStamp(u),n.host=this.decideValue(o.shift()),n.appName=this.decideValue(o.shift()),n.pid=this.decideValue(o.shift()),n.msgID=this.decideValue(o.shift()),"-"!==o[0]){var l=0;for(i=o.length-1;i>-1;i--)if("]"===o[i].substr(-1)){l=i,l++;break}if(0!==l){var c=o.splice(0,l).join(" ");n.structuredData=this.parseStructure(c),n.structuredData.ssign?n.structuredData.signedBlock=this.parseSignedBlock(n.structuredData):n.structuredData["ssign-cert"]&&(n.structuredData.signedBlock=this.parseSignedCertificate(n.structuredData))}}else o.shift();n.message=o.join(" ")}else o[0].match(/^(<\d+>\d+:)$/)?(n.type="RFC3164",u=o.splice(0,1).join(" ").replace(/^(<\d+>)/,""),n.time=this.parseBsdTime(u),n.message=o.join(" ")):o[0].match(/^(<\d+>\w+)/)&&(n.type="RFC3164",""===o[1]&&o.splice(1,1),u=o.splice(0,3).join(" ").replace(/^(<\d+>)/,""),n.time=this.parseBsdTime(u),n.host=o.shift(),n.message=o.join(" "));return r?void r(n):n},a.prototype.decideValue=function(t){return"-"===t?null:t},a.prototype.decodePri=function(t){if("string"==typeof t){var e=t.match(/^<(\d+)>/);if(!e)return!1;var i={prival:parseInt(e[1],10)};if(e[2]&&(i.versio=parseInt(e[2],10)),i.prival&&i.prival>=0&&i.prival<=191)i.facilityID=parseInt(i.prival/8,10),i.severityID=i.prival-8*i.facilityID,i.facilityID<24&&i.severityID<8&&(i.facility=r[i.facilityID],i.severity=n[i.severityID]);else if(i.prival>=191)return!1;return i}},a.prototype.parseTimeStamp=function(t){if("string"==typeof t){var e;return(e=this.parse8601(t))?e:(e=this.parseRfc3339(t))?e:(e=this.parseBsdTime(t),e?e:e)}},a.prototype.parseRfc3339=function(t){var e,r,n,i=1,o=t.split("T");if(o.length<2)return!1;var s=o[0].split("-"),a=o[1].split(":"),u=a[a.length-1];if(offsetFieldIdentifier=u.charAt(u.length-1),"Z"===offsetFieldIdentifier)e=0,a[a.length-1]=u.substr(0,u.length-2);else{if(-1!=u[u.length-1].indexOf("+")?(r="+",i=1):(r="-",i=-1),n=u.split(r),n.length<2)return!1;a[a.length-1]=n[0],n=n[1].split(":"),e=60*n[0]+n[1],e=60*e*1e3}var l=new Date(Date.UTC(s[0],s[1]-1,s[2],a[0],a[1],a[2])+e*i);return l},a.prototype.parseBsdTime=function(t){var e,r=t.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})/);return r&&(currDate=new Date,e=new Date(currDate.getUTCFullYear(),o[r[1]],r[2],r[3],r[4],r[5])),e},a.prototype.parse8601=function(t){var e=new Date(Date.parse(t));if("Invalid Date"!==e.toString())return e},a.prototype.parseStructure=function(t){for(var e={},r=0,n=!1,i="",o="",s="",a=0;a<t.length;a++){var u=t[a];switch(r){case 0:r="["===u?1:0;break;case 1:" "!=u?i+=u:(e[i]={},r=2);break;case 2:"="===u?(e[i][o]="",r=3):"]"===u?(i="",r=0):" "!=u&&(o+=u);break;case 3:r='"'===u?4:null;break;case 4:"\\"!==u||n?'"'!==u||n?(s+=u,n=!1):(e[i][o]=s,o="",s="",r=2):n=!0}}return e},a.prototype.parseSignedBlock=function(t){if("object"!=typeof t)return!1;var r={},n={};if(t.structuredData&&t.structuredData.ssign)r=t.structuredData.ssign;else if(t.ssign)r=t.ssign;else{if(!t.VER)return!1;r=t}var i=r.VER.match(/^(\d{2})(\d|\w)(\d)$/);if(null!==i&&(n.version=i[1],n.hashAlgorithm=parseInt(i[2],10),n.hashAlgoString=s.hashAlgorithm[n.hashAlgorithm],n.sigScheme=parseInt(i[3],10)),n.rebootSessionID=parseInt(r.RSID,10),n.signatureGroup=parseInt(r.SG,10),n.signaturePriority=parseInt(r.SPRI,10),n.globalBlockCount=parseInt(r.GBC,10),n.firstMsgNumber=parseInt(r.FMN,10),n.msgCount=parseInt(r.CNT,10),n.hashBlock=r.HB.split(/\s/),"function"==typeof e){for(var o in n.hashBlock)n.hashBlock[o]=new e(n.hashBlock[o],encoding="base64");n.thisSignature=new e(r.SIGN,encoding="base64")}else n.thisSignature=r.SIGN;return n},a.prototype.parseSignedCertificate=function(t){if("object"!=typeof t)return!1;var r={},n={};if(t.structuredData&&t.structuredData["ssign-cert"])r=t.structuredData["ssign-cert"];else if(t["ssign-cert"])r=t["ssign-cert"];else{if(!t.VER)return!1;r=t}var i=r.VER.match(/^(\d{2})(\d|\w)(\d)$/);null!==i&&(n.version=i[1],n.hashAlgorithm=parseInt(i[2],10),n.hashAlgoString=s.hashAlgorithm[n.hashAlgorithm],n.sigScheme=parseInt(i[3],10)),n.rebootSessionID=parseInt(r.RSID,10),n.signatureGroup=parseInt(r.SG,10),n.signaturePriority=parseInt(r.SPRI,10),n.totalPayloadLength=parseInt(r.TPBL,10),n.payloadIndex=parseInt(r.INDEX,10),n.fragmentLength=parseInt(r.FLEN,10);var o=r.FRAG.split(/\s/);return n.payloadTimestamp=this.parseTimeStamp(o[0]),n.payloadType=o[1],n.payloadName=s.keyBlobType[o[1]],"function"==typeof e?(n.keyBlob=new e(o[2],encoding="base64"),n.thisSignature=new e(r.SIGN,encoding="base64")):(n.keyBlob=o[2],n.thisSignature=r.SIGN),n},t.exports=new a}).call(e,r(19).Buffer)},function(t,e,r){(function(t,n){/*!
-	 * The buffer module from node.js, for the browser.
+module.exports =
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId])
+/******/ 			return installedModules[moduleId].exports;
+
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			exports: {},
+/******/ 			id: moduleId,
+/******/ 			loaded: false
+/******/ 		};
+
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+
+/******/ 		// Flag the module as loaded
+/******/ 		module.loaded = true;
+
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+
+
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "/build/";
+
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(0);
+/******/ })
+/************************************************************************/
+/******/ ([
+/* 0 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var winston = __webpack_require__(1);
+	var async = __webpack_require__(2);
+	var moment = __webpack_require__(3);
+	var useragent = __webpack_require__(4);
+	var express = __webpack_require__(5);
+	var Webtask = __webpack_require__(6);
+	var app = express();
+	var Request = __webpack_require__(9);
+	var memoizer = __webpack_require__(10);
+
+	__webpack_require__(15).Papertrail;
+
+	function lastLogCheckpoint(req, res) {
+	  var ctx = req.webtaskContext;
+	  var required_settings = ['AUTH0_DOMAIN', 'AUTH0_CLIENT_ID', 'AUTH0_CLIENT_SECRET', 'PAPERTRAIL_HOST', 'PAPERTRAIL_PORT'];
+	  var missing_settings = required_settings.filter(function (setting) {
+	    return !ctx.data[setting];
+	  });
+
+	  if (missing_settings.length) {
+	    return res.status(400).send({ message: 'Missing settings: ' + missing_settings.join(', ') });
+	  }
+
+	  // If this is a scheduled task, we'll get the last log checkpoint from the previous run and continue from there.
+	  req.webtaskContext.storage.get(function (err, data) {
+	    var startCheckpointId = typeof data === 'undefined' ? null : data.checkpointId;
+
+	    var logger = new winston.Logger({
+	      transports: [new winston.transports.Papertrail({
+	        host: ctx.data.PAPERTRAIL_HOST,
+	        port: ctx.data.PAPERTRAIL_PORT,
+	        hostname: ctx.data.PAPERTRAIL_SYSTEM || 'auth0-logs'
+	      })]
+	    });
+
+	    // Start the process.
+	    async.waterfall([function (callback) {
+	      var getLogs = function getLogs(context) {
+	        console.log('Logs from: ' + (context.checkpointId || 'Start') + '.');
+
+	        var take = Number.parseInt(ctx.data.BATCH_SIZE);
+
+	        take = take > 100 ? 100 : take;
+
+	        context.logs = context.logs || [];
+
+	        getLogsFromAuth0(req.webtaskContext.data.AUTH0_DOMAIN, req.access_token, take, context.checkpointId, function (logs, err) {
+	          if (err) {
+	            console.log('Error getting logs from Auth0', err);
+	            return callback(err);
+	          }
+
+	          if (logs && logs.length) {
+	            logs.forEach(function (l) {
+	              return context.logs.push(l);
+	            });
+	            context.checkpointId = context.logs[context.logs.length - 1]._id;
+	          }
+
+	          console.log('Total logs: ' + context.logs.length + '.');
+	          return callback(null, context);
+	        });
+	      };
+
+	      getLogs({ checkpointId: startCheckpointId });
+	    }, function (context, callback) {
+	      var min_log_level = parseInt(ctx.data.LOG_LEVEL) || 0;
+	      var log_matches_level = function log_matches_level(log) {
+	        if (logTypes[log.type]) {
+	          return logTypes[log.type].level >= min_log_level;
+	        }
+	        return true;
+	      };
+
+	      var types_filter = ctx.data.LOG_TYPES && ctx.data.LOG_TYPES.split(',') || [];
+	      var log_matches_types = function log_matches_types(log) {
+	        if (!types_filter || !types_filter.length) return true;
+	        return log.type && types_filter.indexOf(log.type) >= 0;
+	      };
+
+	      context.logs = context.logs.filter(function (l) {
+	        return l.type !== 'sapi' && l.type !== 'fapi';
+	      }).filter(log_matches_level).filter(log_matches_types);
+
+	      callback(null, context);
+	    }, function (context, callback) {
+	      console.log('Uploading blobs...');
+
+	      async.eachLimit(context.logs, 5, function (log, cb) {
+	        var date = moment(log.date);
+	        var url = date.format('YYYY/MM/DD') + '/' + date.format('HH') + '/' + log._id + '.json';
+	        console.log('Uploading ' + url + '.');
+
+	        // papertrail here...
+	        logger.info(JSON.stringify(log), cb);
+	      }, function (err) {
+	        if (err) {
+	          return callback(err);
+	        }
+
+	        console.log('Upload complete.');
+	        return callback(null, context);
+	      });
+	    }], function (err, context) {
+	      if (err) {
+	        console.log('Job failed.');
+
+	        return req.webtaskContext.storage.set({ checkpointId: startCheckpointId }, { force: 1 }, function (error) {
+	          if (error) {
+	            console.log('Error storing startCheckpoint', error);
+	            return res.status(500).send({ error: error });
+	          }
+
+	          res.status(500).send({
+	            error: err
+	          });
+	        });
+	      }
+
+	      console.log('Job complete.');
+
+	      return req.webtaskContext.storage.set({
+	        checkpointId: context.checkpointId,
+	        totalLogsProcessed: context.logs.length
+	      }, { force: 1 }, function (error) {
+	        if (error) {
+	          console.log('Error storing checkpoint', error);
+	          return res.status(500).send({ error: error });
+	        }
+
+	        res.sendStatus(200);
+	      });
+	    });
+	  });
+	}
+
+	var logTypes = {
+	  's': {
+	    event: 'Success Login',
+	    level: 1 // Info
+	  },
+	  'seacft': {
+	    event: 'Success Exchange',
+	    level: 1 // Info
+	  },
+	  'feacft': {
+	    event: 'Failed Exchange',
+	    level: 3 // Error
+	  },
+	  'f': {
+	    event: 'Failed Login',
+	    level: 3 // Error
+	  },
+	  'w': {
+	    event: 'Warnings During Login',
+	    level: 2 // Warning
+	  },
+	  'du': {
+	    event: 'Deleted User',
+	    level: 1 // Info
+	  },
+	  'fu': {
+	    event: 'Failed Login (invalid email/username)',
+	    level: 3 // Error
+	  },
+	  'fp': {
+	    event: 'Failed Login (wrong password)',
+	    level: 3 // Error
+	  },
+	  'fc': {
+	    event: 'Failed by Connector',
+	    level: 3 // Error
+	  },
+	  'fco': {
+	    event: 'Failed by CORS',
+	    level: 3 // Error
+	  },
+	  'con': {
+	    event: 'Connector Online',
+	    level: 1 // Info
+	  },
+	  'coff': {
+	    event: 'Connector Offline',
+	    level: 3 // Error
+	  },
+	  'fcpro': {
+	    event: 'Failed Connector Provisioning',
+	    level: 4 // Critical
+	  },
+	  'ss': {
+	    event: 'Success Signup',
+	    level: 1 // Info
+	  },
+	  'fs': {
+	    event: 'Failed Signup',
+	    level: 3 // Error
+	  },
+	  'cs': {
+	    event: 'Code Sent',
+	    level: 0 // Debug
+	  },
+	  'cls': {
+	    event: 'Code/Link Sent',
+	    level: 0 // Debug
+	  },
+	  'sv': {
+	    event: 'Success Verification Email',
+	    level: 0 // Debug
+	  },
+	  'fv': {
+	    event: 'Failed Verification Email',
+	    level: 0 // Debug
+	  },
+	  'scp': {
+	    event: 'Success Change Password',
+	    level: 1 // Info
+	  },
+	  'fcp': {
+	    event: 'Failed Change Password',
+	    level: 3 // Error
+	  },
+	  'sce': {
+	    event: 'Success Change Email',
+	    level: 1 // Info
+	  },
+	  'fce': {
+	    event: 'Failed Change Email',
+	    level: 3 // Error
+	  },
+	  'scu': {
+	    event: 'Success Change Username',
+	    level: 1 // Info
+	  },
+	  'fcu': {
+	    event: 'Failed Change Username',
+	    level: 3 // Error
+	  },
+	  'scpn': {
+	    event: 'Success Change Phone Number',
+	    level: 1 // Info
+	  },
+	  'fcpn': {
+	    event: 'Failed Change Phone Number',
+	    level: 3 // Error
+	  },
+	  'svr': {
+	    event: 'Success Verification Email Request',
+	    level: 0 // Debug
+	  },
+	  'fvr': {
+	    event: 'Failed Verification Email Request',
+	    level: 3 // Error
+	  },
+	  'scpr': {
+	    event: 'Success Change Password Request',
+	    level: 0 // Debug
+	  },
+	  'fcpr': {
+	    event: 'Failed Change Password Request',
+	    level: 3 // Error
+	  },
+	  'fn': {
+	    event: 'Failed Sending Notification',
+	    level: 3 // Error
+	  },
+	  'sapi': {
+	    event: 'API Operation'
+	  },
+	  'fapi': {
+	    event: 'Failed API Operation'
+	  },
+	  'limit_wc': {
+	    event: 'Blocked Account',
+	    level: 4 // Critical
+	  },
+	  'limit_ui': {
+	    event: 'Too Many Calls to /userinfo',
+	    level: 4 // Critical
+	  },
+	  'api_limit': {
+	    event: 'Rate Limit On API',
+	    level: 4 // Critical
+	  },
+	  'sdu': {
+	    event: 'Successful User Deletion',
+	    level: 1 // Info
+	  },
+	  'fdu': {
+	    event: 'Failed User Deletion',
+	    level: 3 // Error
+	  }
+	};
+
+	function getLogsFromAuth0(domain, token, take, from, cb) {
+	  var url = 'https://' + domain + '/api/v2/logs';
+
+	  Request.get(url).set('Authorization', 'Bearer ' + token).set('Accept', 'application/json').query({ take: take }).query({ from: from }).query({ sort: 'date:1' }).query({ per_page: take }).end(function (err, res) {
+	    if (err || !res.ok) {
+	      console.log('Error getting logs', err);
+	      cb(null, err);
+	    } else {
+	      console.log('x-ratelimit-limit: ', res.headers['x-ratelimit-limit']);
+	      console.log('x-ratelimit-remaining: ', res.headers['x-ratelimit-remaining']);
+	      console.log('x-ratelimit-reset: ', res.headers['x-ratelimit-reset']);
+	      cb(res.body);
+	    }
+	  });
+	}
+
+	var getTokenCached = memoizer({
+	  load: function load(apiUrl, audience, clientId, clientSecret, cb) {
+	    Request.post(apiUrl).send({
+	      audience: audience,
+	      grant_type: 'client_credentials',
+	      client_id: clientId,
+	      client_secret: clientSecret
+	    }).type('application/json').end(function (err, res) {
+	      if (err || !res.ok) {
+	        cb(null, err);
+	      } else {
+	        cb(res.body.access_token);
+	      }
+	    });
+	  },
+	  hash: function hash(apiUrl) {
+	    return apiUrl;
+	  },
+	  max: 100,
+	  maxAge: 1000 * 60 * 60
+	});
+
+	app.use(function (req, res, next) {
+	  var apiUrl = 'https://' + req.webtaskContext.data.AUTH0_DOMAIN + '/oauth/token';
+	  var audience = 'https://' + req.webtaskContext.data.AUTH0_DOMAIN + '/api/v2/';
+	  var clientId = req.webtaskContext.data.AUTH0_CLIENT_ID;
+	  var clientSecret = req.webtaskContext.data.AUTH0_CLIENT_SECRET;
+
+	  getTokenCached(apiUrl, audience, clientId, clientSecret, function (access_token, err) {
+	    if (err) {
+	      console.log('Error getting access_token', err);
+	      return next(err);
+	    }
+
+	    req.access_token = access_token;
+	    next();
+	  });
+	});
+
+	app.get('/', lastLogCheckpoint);
+	app.post('/', lastLogCheckpoint);
+
+	module.exports = Webtask.fromExpress(app);
+
+/***/ },
+/* 1 */
+/***/ function(module, exports) {
+
+	module.exports = require("winston");
+
+/***/ },
+/* 2 */
+/***/ function(module, exports) {
+
+	module.exports = require("async");
+
+/***/ },
+/* 3 */
+/***/ function(module, exports) {
+
+	module.exports = require("moment");
+
+/***/ },
+/* 4 */
+/***/ function(module, exports) {
+
+	module.exports = require("useragent");
+
+/***/ },
+/* 5 */
+/***/ function(module, exports) {
+
+	module.exports = require("express");
+
+/***/ },
+/* 6 */
+/***/ function(module, exports, __webpack_require__) {
+
+	exports.fromConnect = exports.fromExpress = fromConnect;
+	exports.fromHapi = fromHapi;
+	exports.fromServer = exports.fromRestify = fromServer;
+
+
+	// API functions
+
+	function fromConnect (connectFn) {
+	    return function (context, req, res) {
+	        var normalizeRouteRx = createRouteNormalizationRx(req.x_wt.jtn);
+
+	        req.originalUrl = req.url;
+	        req.url = req.url.replace(normalizeRouteRx, '/');
+	        req.webtaskContext = attachStorageHelpers(context);
+
+	        return connectFn(req, res);
+	    };
+	}
+
+	function fromHapi(server) {
+	    var webtaskContext;
+
+	    server.ext('onRequest', function (request, response) {
+	        var normalizeRouteRx = createRouteNormalizationRx(request.x_wt.jtn);
+
+	        request.setUrl(request.url.replace(normalizeRouteRx, '/'));
+	        request.webtaskContext = webtaskContext;
+	    });
+
+	    return function (context, req, res) {
+	        var dispatchFn = server._dispatch();
+
+	        webtaskContext = attachStorageHelpers(context);
+
+	        dispatchFn(req, res);
+	    };
+	}
+
+	function fromServer(httpServer) {
+	    return function (context, req, res) {
+	        var normalizeRouteRx = createRouteNormalizationRx(req.x_wt.jtn);
+
+	        req.originalUrl = req.url;
+	        req.url = req.url.replace(normalizeRouteRx, '/');
+	        req.webtaskContext = attachStorageHelpers(context);
+
+	        return httpServer.emit('request', req, res);
+	    };
+	}
+
+
+	// Helper functions
+
+	function createRouteNormalizationRx(jtn) {
+	    var normalizeRouteBase = '^\/api\/run\/[^\/]+\/';
+	    var normalizeNamedRoute = '(?:[^\/\?#]*\/?)?';
+
+	    return new RegExp(
+	        normalizeRouteBase + (
+	        jtn
+	            ?   normalizeNamedRoute
+	            :   ''
+	    ));
+	}
+
+	function attachStorageHelpers(context) {
+	    context.read = context.secrets.EXT_STORAGE_URL
+	        ?   readFromPath
+	        :   readNotAvailable;
+	    context.write = context.secrets.EXT_STORAGE_URL
+	        ?   writeToPath
+	        :   writeNotAvailable;
+
+	    return context;
+
+
+	    function readNotAvailable(path, options, cb) {
+	        var Boom = __webpack_require__(7);
+
+	        if (typeof options === 'function') {
+	            cb = options;
+	            options = {};
+	        }
+
+	        cb(Boom.preconditionFailed('Storage is not available in this context'));
+	    }
+
+	    function readFromPath(path, options, cb) {
+	        var Boom = __webpack_require__(7);
+	        var Request = __webpack_require__(8);
+
+	        if (typeof options === 'function') {
+	            cb = options;
+	            options = {};
+	        }
+
+	        Request({
+	            uri: context.secrets.EXT_STORAGE_URL,
+	            method: 'GET',
+	            headers: options.headers || {},
+	            qs: { path: path },
+	            json: true,
+	        }, function (err, res, body) {
+	            if (err) return cb(Boom.wrap(err, 502));
+	            if (res.statusCode === 404 && Object.hasOwnProperty.call(options, 'defaultValue')) return cb(null, options.defaultValue);
+	            if (res.statusCode >= 400) return cb(Boom.create(res.statusCode, body && body.message));
+
+	            cb(null, body);
+	        });
+	    }
+
+	    function writeNotAvailable(path, data, options, cb) {
+	        var Boom = __webpack_require__(7);
+
+	        if (typeof options === 'function') {
+	            cb = options;
+	            options = {};
+	        }
+
+	        cb(Boom.preconditionFailed('Storage is not available in this context'));
+	    }
+
+	    function writeToPath(path, data, options, cb) {
+	        var Boom = __webpack_require__(7);
+	        var Request = __webpack_require__(8);
+
+	        if (typeof options === 'function') {
+	            cb = options;
+	            options = {};
+	        }
+
+	        Request({
+	            uri: context.secrets.EXT_STORAGE_URL,
+	            method: 'PUT',
+	            headers: options.headers || {},
+	            qs: { path: path },
+	            body: data,
+	        }, function (err, res, body) {
+	            if (err) return cb(Boom.wrap(err, 502));
+	            if (res.statusCode >= 400) return cb(Boom.create(res.statusCode, body && body.message));
+
+	            cb(null);
+	        });
+	    }
+	}
+
+
+/***/ },
+/* 7 */
+/***/ function(module, exports) {
+
+	module.exports = require("boom");
+
+/***/ },
+/* 8 */
+/***/ function(module, exports) {
+
+	module.exports = require("request");
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+	module.exports = require("superagent");
+
+/***/ },
+/* 10 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(setImmediate) {const LRU = __webpack_require__(13);
+	const _ = __webpack_require__(14);
+	const lru_params =  [ 'max', 'maxAge', 'length', 'dispose', 'stale' ];
+
+	module.exports = function (options) {
+	  var cache = new LRU(_.pick(options, lru_params));
+	  var load = options.load;
+	  var hash = options.hash;
+
+	  var result = function () {
+	    var args = _.toArray(arguments);
+	    var parameters = args.slice(0, -1);
+	    var callback = args.slice(-1).pop();
+
+	    var key;
+
+	    if (parameters.length === 0 && !hash) {
+	      //the load function only receives callback.
+	      key = '_';
+	    } else {
+	      key = hash.apply(options, parameters);
+	    }
+
+	    var fromCache = cache.get(key);
+
+	    if (fromCache) {
+	      return setImmediate.apply(null, [callback, null].concat(fromCache));
+	    }
+
+	    load.apply(null, parameters.concat(function (err) {
+	      if (err) {
+	        return callback(err);
+	      }
+
+	      cache.set(key, _.toArray(arguments).slice(1));
+
+	      return callback.apply(null, arguments);
+
+	    }));
+
+	  };
+
+	  result.keys = cache.keys.bind(cache);
+
+	  return result;
+	};
+
+
+	module.exports.sync = function (options) {
+	  var cache = new LRU(_.pick(options, lru_params));
+	  var load = options.load;
+	  var hash = options.hash;
+
+	  var result = function () {
+	    var args = _.toArray(arguments);
+
+	    var key = hash.apply(options, args);
+
+	    var fromCache = cache.get(key);
+
+	    if (fromCache) {
+	      return fromCache;
+	    }
+
+	    var result = load.apply(null, args);
+
+	    cache.set(key, result);
+
+	    return result;
+	  };
+
+	  result.keys = cache.keys.bind(cache);
+
+	  return result;
+	};
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(11).setImmediate))
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(setImmediate, clearImmediate) {var nextTick = __webpack_require__(12).nextTick;
+	var apply = Function.prototype.apply;
+	var slice = Array.prototype.slice;
+	var immediateIds = {};
+	var nextImmediateId = 0;
+
+	// DOM APIs, for completeness
+
+	exports.setTimeout = function() {
+	  return new Timeout(apply.call(setTimeout, window, arguments), clearTimeout);
+	};
+	exports.setInterval = function() {
+	  return new Timeout(apply.call(setInterval, window, arguments), clearInterval);
+	};
+	exports.clearTimeout =
+	exports.clearInterval = function(timeout) { timeout.close(); };
+
+	function Timeout(id, clearFn) {
+	  this._id = id;
+	  this._clearFn = clearFn;
+	}
+	Timeout.prototype.unref = Timeout.prototype.ref = function() {};
+	Timeout.prototype.close = function() {
+	  this._clearFn.call(window, this._id);
+	};
+
+	// Does not start the time, just sets up the members needed.
+	exports.enroll = function(item, msecs) {
+	  clearTimeout(item._idleTimeoutId);
+	  item._idleTimeout = msecs;
+	};
+
+	exports.unenroll = function(item) {
+	  clearTimeout(item._idleTimeoutId);
+	  item._idleTimeout = -1;
+	};
+
+	exports._unrefActive = exports.active = function(item) {
+	  clearTimeout(item._idleTimeoutId);
+
+	  var msecs = item._idleTimeout;
+	  if (msecs >= 0) {
+	    item._idleTimeoutId = setTimeout(function onTimeout() {
+	      if (item._onTimeout)
+	        item._onTimeout();
+	    }, msecs);
+	  }
+	};
+
+	// That's not how node.js implements it but the exposed api is the same.
+	exports.setImmediate = typeof setImmediate === "function" ? setImmediate : function(fn) {
+	  var id = nextImmediateId++;
+	  var args = arguments.length < 2 ? false : slice.call(arguments, 1);
+
+	  immediateIds[id] = true;
+
+	  nextTick(function onNextTick() {
+	    if (immediateIds[id]) {
+	      // fn.call() is faster so we optimize for the common use-case
+	      // @see http://jsperf.com/call-apply-segu
+	      if (args) {
+	        fn.apply(null, args);
+	      } else {
+	        fn.call(null);
+	      }
+	      // Prevent ids from leaking
+	      exports.clearImmediate(id);
+	    }
+	  });
+
+	  return id;
+	};
+
+	exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
+	  delete immediateIds[id];
+	};
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(11).setImmediate, __webpack_require__(11).clearImmediate))
+
+/***/ },
+/* 12 */
+/***/ function(module, exports) {
+
+	// shim for using process in browser
+
+	var process = module.exports = {};
+	var queue = [];
+	var draining = false;
+	var currentQueue;
+	var queueIndex = -1;
+
+	function cleanUpNextTick() {
+	    draining = false;
+	    if (currentQueue.length) {
+	        queue = currentQueue.concat(queue);
+	    } else {
+	        queueIndex = -1;
+	    }
+	    if (queue.length) {
+	        drainQueue();
+	    }
+	}
+
+	function drainQueue() {
+	    if (draining) {
+	        return;
+	    }
+	    var timeout = setTimeout(cleanUpNextTick);
+	    draining = true;
+
+	    var len = queue.length;
+	    while(len) {
+	        currentQueue = queue;
+	        queue = [];
+	        while (++queueIndex < len) {
+	            if (currentQueue) {
+	                currentQueue[queueIndex].run();
+	            }
+	        }
+	        queueIndex = -1;
+	        len = queue.length;
+	    }
+	    currentQueue = null;
+	    draining = false;
+	    clearTimeout(timeout);
+	}
+
+	process.nextTick = function (fun) {
+	    var args = new Array(arguments.length - 1);
+	    if (arguments.length > 1) {
+	        for (var i = 1; i < arguments.length; i++) {
+	            args[i - 1] = arguments[i];
+	        }
+	    }
+	    queue.push(new Item(fun, args));
+	    if (queue.length === 1 && !draining) {
+	        setTimeout(drainQueue, 0);
+	    }
+	};
+
+	// v8 likes predictible objects
+	function Item(fun, array) {
+	    this.fun = fun;
+	    this.array = array;
+	}
+	Item.prototype.run = function () {
+	    this.fun.apply(null, this.array);
+	};
+	process.title = 'browser';
+	process.browser = true;
+	process.env = {};
+	process.argv = [];
+	process.version = ''; // empty string to avoid regexp issues
+	process.versions = {};
+
+	function noop() {}
+
+	process.on = noop;
+	process.addListener = noop;
+	process.once = noop;
+	process.off = noop;
+	process.removeListener = noop;
+	process.removeAllListeners = noop;
+	process.emit = noop;
+
+	process.binding = function (name) {
+	    throw new Error('process.binding is not supported');
+	};
+
+	process.cwd = function () { return '/' };
+	process.chdir = function (dir) {
+	    throw new Error('process.chdir is not supported');
+	};
+	process.umask = function() { return 0; };
+
+
+/***/ },
+/* 13 */
+/***/ function(module, exports) {
+
+	module.exports = require("lru-cache");
+
+/***/ },
+/* 14 */
+/***/ function(module, exports) {
+
+	module.exports = require("lodash");
+
+/***/ },
+/* 15 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*
+	 * winston-papertrail.js:
 	 *
-	 * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
-	 * @license  MIT
+	 *          Transport for logging to Papertrail Service
+	 *          www.papertrailapp.com
+	 *
+	 * (C) 2013 Ken Perkins
+	 * MIT LICENCE
+	 *
 	 */
-"use strict";function i(){function t(){}try{var e=new Uint8Array(1);return e.foo=function(){return 42},e.constructor=t,42===e.foo()&&e.constructor===t&&"function"==typeof e.subarray&&0===e.subarray(1,1).byteLength}catch(r){return!1}}function o(){return t.TYPED_ARRAY_SUPPORT?2147483647:1073741823}function t(e){return this instanceof t?(t.TYPED_ARRAY_SUPPORT||(this.length=0,this.parent=void 0),"number"==typeof e?s(this,e):"string"==typeof e?a(this,e,arguments.length>1?arguments[1]:"utf8"):u(this,e)):arguments.length>1?new t(e,arguments[1]):new t(e)}function s(e,r){if(e=d(e,0>r?0:0|v(r)),!t.TYPED_ARRAY_SUPPORT)for(var n=0;r>n;n++)e[n]=0;return e}function a(t,e,r){"string"==typeof r&&""!==r||(r="utf8");var n=0|m(e,r);return t=d(t,n),t.write(e,r),t}function u(e,r){if(t.isBuffer(r))return l(e,r);if($(r))return c(e,r);if(null==r)throw new TypeError("must start with number, buffer, array or string");if("undefined"!=typeof ArrayBuffer){if(r.buffer instanceof ArrayBuffer)return f(e,r);if(r instanceof ArrayBuffer)return h(e,r)}return r.length?p(e,r):g(e,r)}function l(t,e){var r=0|v(e.length);return t=d(t,r),e.copy(t,0,0,r),t}function c(t,e){var r=0|v(e.length);t=d(t,r);for(var n=0;r>n;n+=1)t[n]=255&e[n];return t}function f(t,e){var r=0|v(e.length);t=d(t,r);for(var n=0;r>n;n+=1)t[n]=255&e[n];return t}function h(e,r){return t.TYPED_ARRAY_SUPPORT?(r.byteLength,e=t._augment(new Uint8Array(r))):e=f(e,new Uint8Array(r)),e}function p(t,e){var r=0|v(e.length);t=d(t,r);for(var n=0;r>n;n+=1)t[n]=255&e[n];return t}function g(t,e){var r,n=0;"Buffer"===e.type&&$(e.data)&&(r=e.data,n=0|v(r.length)),t=d(t,n);for(var i=0;n>i;i+=1)t[i]=255&r[i];return t}function d(e,r){t.TYPED_ARRAY_SUPPORT?(e=t._augment(new Uint8Array(r)),e.__proto__=t.prototype):(e.length=r,e._isBuffer=!0);var n=0!==r&&r<=t.poolSize>>>1;return n&&(e.parent=Z),e}function v(t){if(t>=o())throw new RangeError("Attempt to allocate Buffer larger than maximum size: 0x"+o().toString(16)+" bytes");return 0|t}function y(e,r){if(!(this instanceof y))return new y(e,r);var n=new t(e,r);return delete n.parent,n}function m(t,e){"string"!=typeof t&&(t=""+t);var r=t.length;if(0===r)return 0;for(var n=!1;;)switch(e){case"ascii":case"binary":case"raw":case"raws":return r;case"utf8":case"utf-8":return V(t).length;case"ucs2":case"ucs-2":case"utf16le":case"utf-16le":return 2*r;case"hex":return r>>>1;case"base64":return H(t).length;default:if(n)return V(t).length;e=(""+e).toLowerCase(),n=!0}}function w(t,e,r){var n=!1;if(e=0|e,r=void 0===r||r===1/0?this.length:0|r,t||(t="utf8"),0>e&&(e=0),r>this.length&&(r=this.length),e>=r)return"";for(;;)switch(t){case"hex":return U(this,e,r);case"utf8":case"utf-8":return S(this,e,r);case"ascii":return D(this,e,r);case"binary":return B(this,e,r);case"base64":return _(this,e,r);case"ucs2":case"ucs-2":case"utf16le":case"utf-16le":return L(this,e,r);default:if(n)throw new TypeError("Unknown encoding: "+t);t=(t+"").toLowerCase(),n=!0}}function E(t,e,r,n){r=Number(r)||0;var i=t.length-r;n?(n=Number(n),n>i&&(n=i)):n=i;var o=e.length;if(o%2!==0)throw new Error("Invalid hex string");n>o/2&&(n=o/2);for(var s=0;n>s;s++){var a=parseInt(e.substr(2*s,2),16);if(isNaN(a))throw new Error("Invalid hex string");t[r+s]=a}return s}function I(t,e,r,n){return J(V(e,t.length-r),t,r,n)}function T(t,e,r,n){return J(G(e),t,r,n)}function b(t,e,r,n){return T(t,e,r,n)}function R(t,e,r,n){return J(H(e),t,r,n)}function A(t,e,r,n){return J(z(e,t.length-r),t,r,n)}function _(t,e,r){return 0===e&&r===t.length?K.fromByteArray(t):K.fromByteArray(t.slice(e,r))}function S(t,e,r){r=Math.min(t.length,r);for(var n=[],i=e;r>i;){var o=t[i],s=null,a=o>239?4:o>223?3:o>191?2:1;if(r>=i+a){var u,l,c,f;switch(a){case 1:128>o&&(s=o);break;case 2:u=t[i+1],128===(192&u)&&(f=(31&o)<<6|63&u,f>127&&(s=f));break;case 3:u=t[i+1],l=t[i+2],128===(192&u)&&128===(192&l)&&(f=(15&o)<<12|(63&u)<<6|63&l,f>2047&&(55296>f||f>57343)&&(s=f));break;case 4:u=t[i+1],l=t[i+2],c=t[i+3],128===(192&u)&&128===(192&l)&&128===(192&c)&&(f=(15&o)<<18|(63&u)<<12|(63&l)<<6|63&c,f>65535&&1114112>f&&(s=f))}}null===s?(s=65533,a=1):s>65535&&(s-=65536,n.push(s>>>10&1023|55296),s=56320|1023&s),n.push(s),i+=a}return P(n)}function P(t){var e=t.length;if(W>=e)return String.fromCharCode.apply(String,t);for(var r="",n=0;e>n;)r+=String.fromCharCode.apply(String,t.slice(n,n+=W));return r}function D(t,e,r){var n="";r=Math.min(t.length,r);for(var i=e;r>i;i++)n+=String.fromCharCode(127&t[i]);return n}function B(t,e,r){var n="";r=Math.min(t.length,r);for(var i=e;r>i;i++)n+=String.fromCharCode(t[i]);return n}function U(t,e,r){var n=t.length;(!e||0>e)&&(e=0),(!r||0>r||r>n)&&(r=n);for(var i="",o=e;r>o;o++)i+=j(t[o]);return i}function L(t,e,r){for(var n=t.slice(e,r),i="",o=0;o<n.length;o+=2)i+=String.fromCharCode(n[o]+256*n[o+1]);return i}function C(t,e,r){if(t%1!==0||0>t)throw new RangeError("offset is not uint");if(t+e>r)throw new RangeError("Trying to access beyond buffer length")}function x(e,r,n,i,o,s){if(!t.isBuffer(e))throw new TypeError("buffer must be a Buffer instance");if(r>o||s>r)throw new RangeError("value is out of bounds");if(n+i>e.length)throw new RangeError("index out of range")}function O(t,e,r,n){0>e&&(e=65535+e+1);for(var i=0,o=Math.min(t.length-r,2);o>i;i++)t[r+i]=(e&255<<8*(n?i:1-i))>>>8*(n?i:1-i)}function F(t,e,r,n){0>e&&(e=4294967295+e+1);for(var i=0,o=Math.min(t.length-r,4);o>i;i++)t[r+i]=e>>>8*(n?i:3-i)&255}function Y(t,e,r,n,i,o){if(e>i||o>e)throw new RangeError("value is out of bounds");if(r+n>t.length)throw new RangeError("index out of range");if(0>r)throw new RangeError("index out of range")}function k(t,e,r,n,i){return i||Y(t,e,r,4,3.4028234663852886e38,-3.4028234663852886e38),X.write(t,e,r,n,23,4),r+4}function N(t,e,r,n,i){return i||Y(t,e,r,8,1.7976931348623157e308,-1.7976931348623157e308),X.write(t,e,r,n,52,8),r+8}function M(t){if(t=q(t).replace(tt,""),t.length<2)return"";for(;t.length%4!==0;)t+="=";return t}function q(t){return t.trim?t.trim():t.replace(/^\s+|\s+$/g,"")}function j(t){return 16>t?"0"+t.toString(16):t.toString(16)}function V(t,e){e=e||1/0;for(var r,n=t.length,i=null,o=[],s=0;n>s;s++){if(r=t.charCodeAt(s),r>55295&&57344>r){if(!i){if(r>56319){(e-=3)>-1&&o.push(239,191,189);continue}if(s+1===n){(e-=3)>-1&&o.push(239,191,189);continue}i=r;continue}if(56320>r){(e-=3)>-1&&o.push(239,191,189),i=r;continue}r=(i-55296<<10|r-56320)+65536}else i&&(e-=3)>-1&&o.push(239,191,189);if(i=null,128>r){if((e-=1)<0)break;o.push(r)}else if(2048>r){if((e-=2)<0)break;o.push(r>>6|192,63&r|128)}else if(65536>r){if((e-=3)<0)break;o.push(r>>12|224,r>>6&63|128,63&r|128)}else{if(!(1114112>r))throw new Error("Invalid code point");if((e-=4)<0)break;o.push(r>>18|240,r>>12&63|128,r>>6&63|128,63&r|128)}}return o}function G(t){for(var e=[],r=0;r<t.length;r++)e.push(255&t.charCodeAt(r));return e}function z(t,e){for(var r,n,i,o=[],s=0;s<t.length&&!((e-=2)<0);s++)r=t.charCodeAt(s),n=r>>8,i=r%256,o.push(i),o.push(n);return o}function H(t){return K.toByteArray(M(t))}function J(t,e,r,n){for(var i=0;n>i&&!(i+r>=e.length||i>=t.length);i++)e[i+r]=t[i];return i}var K=r(20),X=r(21),$=r(22);e.Buffer=t,e.SlowBuffer=y,e.INSPECT_MAX_BYTES=50,t.poolSize=8192;var Z={};t.TYPED_ARRAY_SUPPORT=void 0!==n.TYPED_ARRAY_SUPPORT?n.TYPED_ARRAY_SUPPORT:i(),t.TYPED_ARRAY_SUPPORT?(t.prototype.__proto__=Uint8Array.prototype,t.__proto__=Uint8Array):(t.prototype.length=void 0,t.prototype.parent=void 0),t.isBuffer=function(t){return!(null==t||!t._isBuffer)},t.compare=function(e,r){if(!t.isBuffer(e)||!t.isBuffer(r))throw new TypeError("Arguments must be Buffers");if(e===r)return 0;for(var n=e.length,i=r.length,o=0,s=Math.min(n,i);s>o&&e[o]===r[o];)++o;return o!==s&&(n=e[o],i=r[o]),i>n?-1:n>i?1:0},t.isEncoding=function(t){switch(String(t).toLowerCase()){case"hex":case"utf8":case"utf-8":case"ascii":case"binary":case"base64":case"raw":case"ucs2":case"ucs-2":case"utf16le":case"utf-16le":return!0;default:return!1}},t.concat=function(e,r){if(!$(e))throw new TypeError("list argument must be an Array of Buffers.");if(0===e.length)return new t(0);var n;if(void 0===r)for(r=0,n=0;n<e.length;n++)r+=e[n].length;var i=new t(r),o=0;for(n=0;n<e.length;n++){var s=e[n];s.copy(i,o),o+=s.length}return i},t.byteLength=m,t.prototype.toString=function(){var t=0|this.length;return 0===t?"":0===arguments.length?S(this,0,t):w.apply(this,arguments)},t.prototype.equals=function(e){if(!t.isBuffer(e))throw new TypeError("Argument must be a Buffer");return this===e?!0:0===t.compare(this,e)},t.prototype.inspect=function(){var t="",r=e.INSPECT_MAX_BYTES;return this.length>0&&(t=this.toString("hex",0,r).match(/.{2}/g).join(" "),this.length>r&&(t+=" ... ")),"<Buffer "+t+">"},t.prototype.compare=function(e){if(!t.isBuffer(e))throw new TypeError("Argument must be a Buffer");return this===e?0:t.compare(this,e)},t.prototype.indexOf=function(e,r){function n(t,e,r){for(var n=-1,i=0;r+i<t.length;i++)if(t[r+i]===e[-1===n?0:i-n]){if(-1===n&&(n=i),i-n+1===e.length)return r+n}else n=-1;return-1}if(r>2147483647?r=2147483647:-2147483648>r&&(r=-2147483648),r>>=0,0===this.length)return-1;if(r>=this.length)return-1;if(0>r&&(r=Math.max(this.length+r,0)),"string"==typeof e)return 0===e.length?-1:String.prototype.indexOf.call(this,e,r);if(t.isBuffer(e))return n(this,e,r);if("number"==typeof e)return t.TYPED_ARRAY_SUPPORT&&"function"===Uint8Array.prototype.indexOf?Uint8Array.prototype.indexOf.call(this,e,r):n(this,[e],r);throw new TypeError("val must be string, number or Buffer")},t.prototype.get=function(t){return console.log(".get() is deprecated. Access using array indexes instead."),this.readUInt8(t)},t.prototype.set=function(t,e){return console.log(".set() is deprecated. Access using array indexes instead."),this.writeUInt8(t,e)},t.prototype.write=function(t,e,r,n){if(void 0===e)n="utf8",r=this.length,e=0;else if(void 0===r&&"string"==typeof e)n=e,r=this.length,e=0;else if(isFinite(e))e=0|e,isFinite(r)?(r=0|r,void 0===n&&(n="utf8")):(n=r,r=void 0);else{var i=n;n=e,e=0|r,r=i}var o=this.length-e;if((void 0===r||r>o)&&(r=o),t.length>0&&(0>r||0>e)||e>this.length)throw new RangeError("attempt to write outside buffer bounds");n||(n="utf8");for(var s=!1;;)switch(n){case"hex":return E(this,t,e,r);case"utf8":case"utf-8":return I(this,t,e,r);case"ascii":return T(this,t,e,r);case"binary":return b(this,t,e,r);case"base64":return R(this,t,e,r);case"ucs2":case"ucs-2":case"utf16le":case"utf-16le":return A(this,t,e,r);default:if(s)throw new TypeError("Unknown encoding: "+n);n=(""+n).toLowerCase(),s=!0}},t.prototype.toJSON=function(){return{type:"Buffer",data:Array.prototype.slice.call(this._arr||this,0)}};var W=4096;t.prototype.slice=function(e,r){var n=this.length;e=~~e,r=void 0===r?n:~~r,0>e?(e+=n,0>e&&(e=0)):e>n&&(e=n),0>r?(r+=n,0>r&&(r=0)):r>n&&(r=n),e>r&&(r=e);var i;if(t.TYPED_ARRAY_SUPPORT)i=t._augment(this.subarray(e,r));else{var o=r-e;i=new t(o,void 0);for(var s=0;o>s;s++)i[s]=this[s+e]}return i.length&&(i.parent=this.parent||this),i},t.prototype.readUIntLE=function(t,e,r){t=0|t,e=0|e,r||C(t,e,this.length);for(var n=this[t],i=1,o=0;++o<e&&(i*=256);)n+=this[t+o]*i;return n},t.prototype.readUIntBE=function(t,e,r){t=0|t,e=0|e,r||C(t,e,this.length);for(var n=this[t+--e],i=1;e>0&&(i*=256);)n+=this[t+--e]*i;return n},t.prototype.readUInt8=function(t,e){return e||C(t,1,this.length),this[t]},t.prototype.readUInt16LE=function(t,e){return e||C(t,2,this.length),this[t]|this[t+1]<<8},t.prototype.readUInt16BE=function(t,e){return e||C(t,2,this.length),this[t]<<8|this[t+1]},t.prototype.readUInt32LE=function(t,e){return e||C(t,4,this.length),(this[t]|this[t+1]<<8|this[t+2]<<16)+16777216*this[t+3]},t.prototype.readUInt32BE=function(t,e){return e||C(t,4,this.length),16777216*this[t]+(this[t+1]<<16|this[t+2]<<8|this[t+3])},t.prototype.readIntLE=function(t,e,r){t=0|t,e=0|e,r||C(t,e,this.length);for(var n=this[t],i=1,o=0;++o<e&&(i*=256);)n+=this[t+o]*i;return i*=128,n>=i&&(n-=Math.pow(2,8*e)),n},t.prototype.readIntBE=function(t,e,r){t=0|t,e=0|e,r||C(t,e,this.length);for(var n=e,i=1,o=this[t+--n];n>0&&(i*=256);)o+=this[t+--n]*i;return i*=128,o>=i&&(o-=Math.pow(2,8*e)),o},t.prototype.readInt8=function(t,e){return e||C(t,1,this.length),128&this[t]?-1*(255-this[t]+1):this[t]},t.prototype.readInt16LE=function(t,e){e||C(t,2,this.length);var r=this[t]|this[t+1]<<8;return 32768&r?4294901760|r:r},t.prototype.readInt16BE=function(t,e){e||C(t,2,this.length);var r=this[t+1]|this[t]<<8;return 32768&r?4294901760|r:r},t.prototype.readInt32LE=function(t,e){return e||C(t,4,this.length),this[t]|this[t+1]<<8|this[t+2]<<16|this[t+3]<<24},t.prototype.readInt32BE=function(t,e){return e||C(t,4,this.length),this[t]<<24|this[t+1]<<16|this[t+2]<<8|this[t+3]},t.prototype.readFloatLE=function(t,e){return e||C(t,4,this.length),X.read(this,t,!0,23,4)},t.prototype.readFloatBE=function(t,e){return e||C(t,4,this.length),X.read(this,t,!1,23,4)},t.prototype.readDoubleLE=function(t,e){return e||C(t,8,this.length),X.read(this,t,!0,52,8)},t.prototype.readDoubleBE=function(t,e){return e||C(t,8,this.length),X.read(this,t,!1,52,8)},t.prototype.writeUIntLE=function(t,e,r,n){t=+t,e=0|e,r=0|r,n||x(this,t,e,r,Math.pow(2,8*r),0);var i=1,o=0;for(this[e]=255&t;++o<r&&(i*=256);)this[e+o]=t/i&255;return e+r},t.prototype.writeUIntBE=function(t,e,r,n){t=+t,e=0|e,r=0|r,n||x(this,t,e,r,Math.pow(2,8*r),0);var i=r-1,o=1;for(this[e+i]=255&t;--i>=0&&(o*=256);)this[e+i]=t/o&255;return e+r},t.prototype.writeUInt8=function(e,r,n){return e=+e,r=0|r,n||x(this,e,r,1,255,0),t.TYPED_ARRAY_SUPPORT||(e=Math.floor(e)),this[r]=255&e,r+1},t.prototype.writeUInt16LE=function(e,r,n){return e=+e,r=0|r,n||x(this,e,r,2,65535,0),t.TYPED_ARRAY_SUPPORT?(this[r]=255&e,this[r+1]=e>>>8):O(this,e,r,!0),r+2},t.prototype.writeUInt16BE=function(e,r,n){return e=+e,r=0|r,n||x(this,e,r,2,65535,0),t.TYPED_ARRAY_SUPPORT?(this[r]=e>>>8,this[r+1]=255&e):O(this,e,r,!1),r+2},t.prototype.writeUInt32LE=function(e,r,n){return e=+e,r=0|r,n||x(this,e,r,4,4294967295,0),t.TYPED_ARRAY_SUPPORT?(this[r+3]=e>>>24,this[r+2]=e>>>16,this[r+1]=e>>>8,this[r]=255&e):F(this,e,r,!0),r+4},t.prototype.writeUInt32BE=function(e,r,n){return e=+e,r=0|r,n||x(this,e,r,4,4294967295,0),t.TYPED_ARRAY_SUPPORT?(this[r]=e>>>24,this[r+1]=e>>>16,this[r+2]=e>>>8,this[r+3]=255&e):F(this,e,r,!1),r+4},t.prototype.writeIntLE=function(t,e,r,n){if(t=+t,e=0|e,!n){var i=Math.pow(2,8*r-1);x(this,t,e,r,i-1,-i)}var o=0,s=1,a=0>t?1:0;for(this[e]=255&t;++o<r&&(s*=256);)this[e+o]=(t/s>>0)-a&255;return e+r},t.prototype.writeIntBE=function(t,e,r,n){if(t=+t,e=0|e,!n){var i=Math.pow(2,8*r-1);x(this,t,e,r,i-1,-i)}var o=r-1,s=1,a=0>t?1:0;for(this[e+o]=255&t;--o>=0&&(s*=256);)this[e+o]=(t/s>>0)-a&255;return e+r},t.prototype.writeInt8=function(e,r,n){return e=+e,r=0|r,n||x(this,e,r,1,127,-128),t.TYPED_ARRAY_SUPPORT||(e=Math.floor(e)),0>e&&(e=255+e+1),this[r]=255&e,r+1},t.prototype.writeInt16LE=function(e,r,n){return e=+e,r=0|r,n||x(this,e,r,2,32767,-32768),t.TYPED_ARRAY_SUPPORT?(this[r]=255&e,this[r+1]=e>>>8):O(this,e,r,!0),r+2},t.prototype.writeInt16BE=function(e,r,n){return e=+e,r=0|r,n||x(this,e,r,2,32767,-32768),t.TYPED_ARRAY_SUPPORT?(this[r]=e>>>8,this[r+1]=255&e):O(this,e,r,!1),r+2},t.prototype.writeInt32LE=function(e,r,n){return e=+e,r=0|r,n||x(this,e,r,4,2147483647,-2147483648),t.TYPED_ARRAY_SUPPORT?(this[r]=255&e,this[r+1]=e>>>8,this[r+2]=e>>>16,this[r+3]=e>>>24):F(this,e,r,!0),r+4},t.prototype.writeInt32BE=function(e,r,n){return e=+e,r=0|r,n||x(this,e,r,4,2147483647,-2147483648),0>e&&(e=4294967295+e+1),t.TYPED_ARRAY_SUPPORT?(this[r]=e>>>24,this[r+1]=e>>>16,this[r+2]=e>>>8,this[r+3]=255&e):F(this,e,r,!1),r+4},t.prototype.writeFloatLE=function(t,e,r){return k(this,t,e,!0,r)},t.prototype.writeFloatBE=function(t,e,r){return k(this,t,e,!1,r)},t.prototype.writeDoubleLE=function(t,e,r){return N(this,t,e,!0,r)},t.prototype.writeDoubleBE=function(t,e,r){return N(this,t,e,!1,r)},t.prototype.copy=function(e,r,n,i){if(n||(n=0),i||0===i||(i=this.length),r>=e.length&&(r=e.length),r||(r=0),i>0&&n>i&&(i=n),i===n)return 0;if(0===e.length||0===this.length)return 0;if(0>r)throw new RangeError("targetStart out of bounds");if(0>n||n>=this.length)throw new RangeError("sourceStart out of bounds");if(0>i)throw new RangeError("sourceEnd out of bounds");i>this.length&&(i=this.length),e.length-r<i-n&&(i=e.length-r+n);var o,s=i-n;if(this===e&&r>n&&i>r)for(o=s-1;o>=0;o--)e[o+r]=this[o+n];else if(1e3>s||!t.TYPED_ARRAY_SUPPORT)for(o=0;s>o;o++)e[o+r]=this[o+n];else e._set(this.subarray(n,n+s),r);return s},t.prototype.fill=function(t,e,r){if(t||(t=0),e||(e=0),r||(r=this.length),e>r)throw new RangeError("end < start");if(r!==e&&0!==this.length){if(0>e||e>=this.length)throw new RangeError("start out of bounds");if(0>r||r>this.length)throw new RangeError("end out of bounds");var n;if("number"==typeof t)for(n=e;r>n;n++)this[n]=t;else{var i=V(t.toString()),o=i.length;for(n=e;r>n;n++)this[n]=i[n%o]}return this}},t.prototype.toArrayBuffer=function(){if("undefined"!=typeof Uint8Array){if(t.TYPED_ARRAY_SUPPORT)return new t(this).buffer;for(var e=new Uint8Array(this.length),r=0,n=e.length;n>r;r+=1)e[r]=this[r];return e.buffer}throw new TypeError("Buffer.toArrayBuffer not supported in this browser")};var Q=t.prototype;t._augment=function(e){return e.constructor=t,e._isBuffer=!0,e._set=e.set,e.get=Q.get,e.set=Q.set,e.write=Q.write,e.toString=Q.toString,e.toLocaleString=Q.toString,e.toJSON=Q.toJSON,e.equals=Q.equals,e.compare=Q.compare,e.indexOf=Q.indexOf,e.copy=Q.copy,e.slice=Q.slice,e.readUIntLE=Q.readUIntLE,e.readUIntBE=Q.readUIntBE,e.readUInt8=Q.readUInt8,e.readUInt16LE=Q.readUInt16LE,e.readUInt16BE=Q.readUInt16BE,e.readUInt32LE=Q.readUInt32LE,e.readUInt32BE=Q.readUInt32BE,e.readIntLE=Q.readIntLE,e.readIntBE=Q.readIntBE,e.readInt8=Q.readInt8,e.readInt16LE=Q.readInt16LE,e.readInt16BE=Q.readInt16BE,e.readInt32LE=Q.readInt32LE,e.readInt32BE=Q.readInt32BE,e.readFloatLE=Q.readFloatLE,e.readFloatBE=Q.readFloatBE,e.readDoubleLE=Q.readDoubleLE,e.readDoubleBE=Q.readDoubleBE,e.writeUInt8=Q.writeUInt8,e.writeUIntLE=Q.writeUIntLE,e.writeUIntBE=Q.writeUIntBE,e.writeUInt16LE=Q.writeUInt16LE,e.writeUInt16BE=Q.writeUInt16BE,e.writeUInt32LE=Q.writeUInt32LE,e.writeUInt32BE=Q.writeUInt32BE,e.writeIntLE=Q.writeIntLE,e.writeIntBE=Q.writeIntBE,e.writeInt8=Q.writeInt8,e.writeInt16LE=Q.writeInt16LE,e.writeInt16BE=Q.writeInt16BE,e.writeInt32LE=Q.writeInt32LE,e.writeInt32BE=Q.writeInt32BE,e.writeFloatLE=Q.writeFloatLE,e.writeFloatBE=Q.writeFloatBE,e.writeDoubleLE=Q.writeDoubleLE,e.writeDoubleBE=Q.writeDoubleBE,e.fill=Q.fill,e.inspect=Q.inspect,e.toArrayBuffer=Q.toArrayBuffer,e};var tt=/[^+\/0-9A-Za-z-_]/g}).call(e,r(19).Buffer,function(){return this}())},function(t,e){t.exports=require("base64-js")},function(t,e){t.exports=require("ieee754")},function(t,e){t.exports=require("isarray")},function(t,e){t.exports=require("util")}]);
+
+	var os = __webpack_require__(16),
+	    net = __webpack_require__(17),
+	    tls = __webpack_require__(18),
+	    syslogProducer = __webpack_require__(19).Produce,
+	    util = __webpack_require__(22),
+	    winston = __webpack_require__(1);
+
+	/**
+	 * Papertrail class
+	 *
+	 * @description constructor for the Papertrail transport
+	 *
+	 * @param {object}      options                 options for your papertrail transport
+	 *
+	 * @param {string}      options.host            host for papertrail endpoint
+	 *
+	 * @param {Number}      options.port            port for papertrail endpoint
+	 *
+	 * @param {Boolean}     [options.disableTls]    disable TLS connections, enabled by default
+	 *
+	 * @param {string}      [options.hostname]      name for the logging hostname in Papertrail
+	 *
+	 * @param {string}      [options.program]       name for the logging program
+	 *
+	 * @param {string}      [options.facility]      syslog facility for log messages
+	 *
+	 * @param {string}      [options.level]         log level for your transport (info)
+	 *
+	 * @param {Function}    [options.logFormat]     function to format your log message before sending
+	 *
+	 * @param {Number}      [options.attemptsBeforeDecay]       how many reconnections should
+	 *                                                          be attempted before backing of (5)
+	 *
+	 * @param {Number}      [options.maximumAttempts]           maximum attempts before
+	 *                                                          disabling buffering (25)
+	 *
+	 * @param {Number}      [options.connectionDelay]           delay between
+	 *                                                          reconnection attempts in ms (1000)
+	 *
+	 * @param {Boolean}     [options.handleExceptions]          passed to base Transport (false)
+	 *
+	 * @param {Boolean}     [options.colorize]                  enable colors in Papertrail (false)
+	 *
+	 * @param {Number}      [options.maxDelayBetweenReconnection]   when backing off,
+	 *                                                              what's the max time between
+	 *                                                              reconnections (ms)
+	 *
+	 * @param {Boolean}     [options.inlineMeta]        inline multi-line messages (false)
+	 *
+	 * @type {Function}
+	 */
+	var Papertrail = exports.Papertrail = function (options) {
+
+	    var self = this;
+
+	    self._KEEPALIVE_INTERVAL = 15 * 1000;
+
+	    options = options || {};
+
+	    self.name = 'Papertrail';
+	    self.level = options.level || 'info';
+
+	    // Papertrail Service Host
+	    self.host = options.host;
+
+	    // Papertrail Service Port
+	    self.port = options.port;
+
+	    // Disable TLS connections (enabled by default)
+	    self.disableTls = typeof options.disableTls === 'boolean' ? options.disableTls : false;
+
+	    // Hostname of the current app
+	    self.hostname = options.hostname || os.hostname();
+
+	    // Program is an affordance for Papertrail to name the source of log entries
+	    self.program = options.program || 'default';
+
+	    // Syslog facility to log messages as to Papertrail
+	    self.facility = options.facility || 'daemon';
+
+	    // Send ANSI color codes through to Papertrail
+	    self.colorize = options.colorize || false;
+
+	    // Format your log messages prior to delivery
+	    self.logFormat = options.logFormat || function (level, message) {
+	        return level + ' ' + message;
+	    };
+
+	    // Number of attempts before decaying reconnection
+	    self.attemptsBeforeDecay = options.attemptsBeforeDecay || 5;
+
+	    // Maximum number of reconnection attempts before disabling buffer
+	    self.maximumAttempts = options.maximumAttempts || 25;
+
+	    // Delay between normal attempts
+	    self.connectionDelay = options.connectionDelay || 1000;
+
+	    // Handle Exceptions
+	    self.handleExceptions = options.handleExceptions || false;
+
+	    // Maximum delay between attempts
+	    self.maxDelayBetweenReconnection =
+	        options.maxDelayBetweenReconnection || 60000;
+
+	    // Maximum buffer size (default: 1MB)
+	    self.maxBufferSize =
+	        options.maxBufferSize || 1 * 1024 * 1024;
+
+	    // Inline meta flag
+	    self.inlineMeta = options.inlineMeta || false;
+
+	    self.producer = new syslogProducer({ facility: self.facility });
+
+	    self.currentRetries = 0;
+	    self.totalRetries = 0;
+	    self.buffer = '';
+	    self.loggingEnabled = true;
+	    self._shutdown = false;
+
+	    // Error out if we don't have a host or port
+	    if (!self.host || !self.port) {
+	        throw new Error('Missing required parameters: host and port');
+	    }
+
+	    // Open the connection
+	    connectStream();
+
+	    // Opens a connection to Papertrail
+	    function connectStream() {
+	        // don't connect on either error or shutdown
+	        if (self._shutdown || self._erroring) {
+	            return;
+	        }
+
+	        try {
+
+	            function wireStreams() {
+	                self.stream.on('error', onErrored);
+
+	                // If we have the stream end, simply reconnect
+	                self.stream.on('end', connectStream);
+	            }
+
+	            if (self.disableTls) {
+	                self.stream = net.createConnection(self.port, self.host, onConnected);
+	                self.stream.setKeepAlive(true, self._KEEPALIVE_INTERVAL);
+
+	                wireStreams();
+	            }
+	            else {
+	                var socket = net.createConnection(self.port, self.host, function () {
+	                    socket.setKeepAlive(true, self._KEEPALIVE_INTERVAL);
+
+	                    self.stream = tls.connect({
+	                        socket: socket,
+	                        rejectUnauthorized: false
+	                    }, onConnected);
+
+	                    wireStreams();
+	                });
+
+	                socket.on('error', onErrored);
+	            }
+	        }
+	        catch (e) {
+	            onErrored(e);
+	        }
+	    }
+
+	    function onErrored(err) {
+	        // make sure we prevent simultaneous attempts to connect and handle errors
+	        self._erroring = true;
+
+	        self.emit('error', err);
+
+	        // We may be disconnected from the papertrail endpoint for any number of reasons;
+	        // i.e. inactivity, network problems, etc, and we need to be resilient against this
+	        // that said, we back off reconnection attempts in case Papertrail is truly down
+	        setTimeout(function () {
+	            // Increment our retry counts
+	            self.currentRetries++;
+	            self.totalRetries++;
+
+	            // Decay the retry rate exponentially up to max between attempts
+	            if ((self.connectionDelay < self.maxDelayBetweenReconnection) &&
+	            (self.currentRetries >= self.attemptsBeforeDecay)) {
+	                self.connectionDelay = self.connectionDelay * 2;
+	                self.currentRetries = 0;
+	            }
+
+	            // Stop buffering messages after a fixed number of retries.
+	            // This is to keep the buffer from growing unbounded
+	            if (self.loggingEnabled &&
+	                (self.totalRetries >= (self.maximumAttempts))) {
+	                    self.loggingEnabled = false;
+	                    self.emit('error', new Error('Max entries eclipsed, disabling buffering'));
+	            }
+
+	            // continue
+	            self._erroring = false;
+	            connectStream();
+
+	        }, self.connectionDelay);
+	    }
+
+	    function onConnected() {
+	        // Reset our variables
+	        self.loggingEnabled = true;
+	        self.currentRetries = 0;
+	        self.totalRetries = 0;
+	        self.connectionDelay = options.connectionDelay || 1000;
+
+	        self.emit('connect', 'Connected to Papertrail at ' + self.host + ':' + self.port);
+
+	        // Did we get messages buffered
+	        if (self.buffer.length > 0) {
+	            self.stream.write(self.buffer);
+	            self.buffer = '';
+	        }
+	    }
+	};
+
+	//
+	//
+	// Inherit from `winston.Transport` so you can take advantage
+	// of the base functionality and `.handleExceptions()`.
+	//
+	util.inherits(Papertrail, winston.Transport);
+
+	//
+	// Define a getter so that `winston.transports.Papertrail`
+	// is available and thus backwards compatible.
+	//
+	winston.transports.Papertrail = Papertrail;
+
+	/**
+	 * Papertrail.log
+	 *
+	 * @description Core logging method exposed to Winston. Metadata is optional.
+	 *
+	 * @param {String}        level    Level at which to log the message.
+	 * @param {String}        msg        Message to log
+	 * @param {String|object|Function}        [meta]    Optional metadata to attach
+	 * @param {Function}    callback
+	 * @returns {*}
+	 */
+	Papertrail.prototype.log = function (level, msg, meta, callback) {
+
+	    var self = this;
+
+	    // make sure we handle when meta isn't provided
+	    if (typeof(meta) === 'function' && !callback) {
+	        callback = meta;
+	        meta = false;
+	    }
+
+	    if  (meta && typeof meta === 'object' && (Object.keys(meta).length === 0)
+			&& (!util.isError(meta)))
+		{
+	        meta = false;
+	    }
+
+	    // If the logging buffer is disabled, drop the message on the floor
+	    if (!this.loggingEnabled) {
+	        return callback(null, true);
+	    }
+
+	    var output = msg;
+
+	    // If we don't have a string for the message,
+	    // lets transform it before moving on
+	    if (typeof(output) !== 'string') {
+	        output = util.inspect(output, false, null, self.colorize);
+	    }
+
+	    if (meta) {
+	        if (typeof meta !== 'object') {
+	            output += ' ' + meta;
+	        }
+	        else if (meta) {
+	            if (this.inlineMeta) {
+	                output += ' ' + util.inspect(meta, false, null, self.colorize).replace(/[\n\t]\s*/gm, " ");
+	            }
+	            else {
+	                output += '\n' + util.inspect(meta, false, null, self.colorize);
+	            }
+	        }
+	    }
+
+	    this.sendMessage(this.hostname, this.program, level, output);
+
+	    callback(null, true);
+	};
+
+	/**
+	 * Papertrail.sendMessage
+	 *
+	 * @description sending the message to the stream, or buffering if not connected
+	 *
+	 * @param {String}    hostname    Hostname of the source application.
+	 * @param {String}    program     Name of the source application
+	 * @param {String}    level        Log level of the message
+	 * @param {String}    message        The message to deliver
+	 */
+	Papertrail.prototype.sendMessage = function (hostname, program, level, message) {
+
+	    var self = this,
+	        lines = [],
+	        msg = '',
+	        gap = '';
+
+	    // Only split if we actually have a message
+	    if (message) {
+	        lines = message.split('\n');
+	    }
+	    else {
+	        lines = [''];
+	    }
+
+	    // If the incoming message has multiple lines, break them and format each
+	    // line as it's own message
+	    for (var i = 0; i < lines.length; i++) {
+
+	        // don't send extra message if our message ends with a newline
+	        if ((lines[i].length === 0) && (i == lines.length - 1)) {
+	            break;
+	        }
+
+	        if (i == 1) {
+	            gap = '    ';
+	        }
+
+	        msg += self.producer.produce({
+	            severity: level,
+	            host: hostname,
+	            appName: program,
+	            date: new Date(),
+	            message: self.logFormat(self.colorize ? winston.config.colorize(level) : level, gap + lines[i])
+	        }) + '\r\n';
+	    }
+
+	    if (this.stream && this.stream.writable) {
+	        this.stream.write(msg);
+	    }
+	    else if (this.loggingEnabled && this.buffer.length < this.maxBufferSize) {
+	        this.buffer += msg;
+	    }
+	};
+
+	/**
+	 * Papertrail.close
+	 *
+	 * @description closes the underlying TLS connection and disables automatic
+	 * reconnection, allowing the process to exit
+	 */
+	Papertrail.prototype.close = function() {
+	    var self = this;
+
+	    self._shutdown = true;
+	    
+	    if (self.stream) {
+	        self.stream.end();
+	    }
+	    // if there's no stream yet, that means we're still connecting
+	    // lets wire a connect handler, and then invoke close again
+	    else {
+	        self.on('connect', function() {
+	            self.close();
+	        });
+	    }
+	};
+
+
+/***/ },
+/* 16 */
+/***/ function(module, exports) {
+
+	module.exports = require("os");
+
+/***/ },
+/* 17 */
+/***/ function(module, exports) {
+
+	module.exports = require("net");
+
+/***/ },
+/* 18 */
+/***/ function(module, exports) {
+
+	module.exports = require("tls");
+
+/***/ },
+/* 19 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*
+	 *  Imports
+	 */
+
+	var producer = __webpack_require__(20);
+	var parser   = __webpack_require__(21);
+
+	/*
+	 *  Exports
+	 */
+	exports.Produce = producer;
+	exports.Parse   = parser;
+
+
+/***/ },
+/* 20 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*
+	 *    Glossy Producer - Generate valid syslog messages
+	 *
+	 *    Copyright Squeeks <privacymyass@gmail.com>.
+	 *    This is free software licensed under the MIT License - 
+	 *    see the LICENSE file that should be included with this package.
+	 */
+
+	/*
+	 *    These values replace the integers in message that define the facility.
+	 */
+	var FacilityIndex = {
+	    'kern':   0,  // kernel messages
+	    'user':   1,  // user-level messages
+	    'mail':   2,  // mail system
+	    'daemon': 3,  // system daemons
+	    'auth':   4,  // security/authorization messages
+	    'syslog': 5,  // messages generated internally by syslogd
+	    'lpr':    6,  // line printer subsystem
+	    'news':   7,  // network news subsystem
+	    'uucp':   8,  // UUCP subsystem
+	    'clock':  9,  // clock daemon
+	    'sec':    10, // security/authorization messages
+	    'ftp':    11, // FTP daemon
+	    'ntp':    12, // NTP subsystem
+	    'audit':  13, // log audit
+	    'alert':  14, // log alert
+	//  'clock':  15, // clock daemon (note 2)
+	    'local0': 16, // local use 0  (local0)
+	    'local1': 17, // local use 1  (local1)
+	    'local2': 18, // local use 2  (local2)
+	    'local3': 19, // local use 3  (local3)
+	    'local4': 20, // local use 4  (local4)
+	    'local5': 21, // local use 5  (local5)
+	    'local6': 22, // local use 6  (local6)
+	    'local7': 23  // local use 7  (local7)
+	};
+
+	// Note 1 - Various operating systems have been found to utilize
+	//           Facilities 4, 10, 13 and 14 for security/authorization,
+	//           audit, and alert messages which seem to be similar. 
+
+	// Note 2 - Various operating systems have been found to utilize
+	//           both Facilities 9 and 15 for clock (cron/at) messages.
+
+	/*
+	 *    These values replace the integers in message that define the severity.
+	 */
+	var SeverityIndex = {
+	    'emerg': 0,                 // Emergency: system is unusable
+	    'emergency': 0,
+
+	    'alert': 1,                 // Alert: action must be taken immediately
+
+	    'crit': 2,                  // Critical: critical conditions
+	    'critical': 2,
+
+	    'err': 3,                   // Error: error conditions
+	    'error': 3,
+
+	    'warn': 4,                  // Warning: warning conditions
+	    'warning': 4,
+
+	    'notice': 5,                // Notice: normal but significant condition
+
+	    'info': 6  ,                // Informational: informational messages
+	    'information': 6,
+	    'informational': 6,
+
+	    'debug':  7                 // Debug: debug-level messages
+	};
+
+
+	/*
+	 *    Defines the range matching BSD style months to integers.
+	 */
+	var BSDDateIndex = [
+	    'Jan',
+	    'Feb',
+	    'Mar',
+	    'Apr',
+	    'May',
+	    'Jun',
+	    'Jul',
+	    'Aug',
+	    'Sep',
+	    'Oct',
+	    'Nov',
+	    'Dec'
+	];
+
+
+	/*
+	 *  GlossyProducer class
+	 *  @param {Object} provides persistent details of all messages:
+	 *      facility: The facility index
+	 *      severity: Severity index
+	 *      host: Host address, either name or IP
+	 *      appName: Application/Process name
+	 *      pid: Process ID
+	 *      msgID: Message ID (RFC5424 only)
+	 *      type: RFC3164/RFC5424 message type
+	 *  @return {Object} GlossyProducer object
+	 */
+	var GlossyProducer = function(options) {
+	    if(options && typeof options =='object' && options.type) {
+	        this.type = options.type.match(/bsd|3164/i) ? "RFC3164" : "RFC5424";
+	    } else if(options && typeof options == 'string') {
+	        this.type = options.match(/bsd|3164/i) ? "RFC3164" : "RFC5424";
+	    } else {
+	        this.type = "RFC5424";
+	    }
+
+	    if(options && options.facility && FacilityIndex[options.facility]) {
+	        this.facility = options.facility;
+	    }
+	    if(options && options.pid && parseInt(options.pid, 10)) {
+	        this.pid = options.pid;
+	    }
+	    if(options && options.host)    this.host    = options.host.replace(/\s+/g, '');
+	    if(options && options.appName) this.appName = options.appName.replace(/\s+/g, '');
+	    if(options && options.msgID)   this.msgID   = options.msgID.replace(/\s+/g, '');
+
+	};
+
+
+	/*
+	 *  @param {Object} options object containing details of the message:
+	 *      facility: The facility index
+	 *      severity: Severity index
+	 *      prival: RFC5424 PRIVAL field - will override facility/severity if in valid [0-191] range and both provided
+	 *         see ABNF at: (http://tools.ietf.org/html/rfc5424#section-6) 
+	 *      host: Host address, either name or IP
+	 *      appName: Application ID
+	 *      pid: Process ID
+	 *      date: Timestamp to be applied, uses current GMT by default
+	 *      time: Optional Date() argument may be used in lieu of 'date' - allows parse() output to be used for produce args
+	 *      msgID: Message ID (RFC5424 only)
+	 *      structuredData: Object of structured data (RFC5424 only)
+	 *      message: The message to be sent
+	 *
+	 *  @param {Function} callback a callback run once the message is built
+	 *  @return {String} compiledMessage on completion, false on failure
+	 */
+	GlossyProducer.prototype.produce = function(options, callback) {
+	    // TODO: next breaking api change make key output from parse() consistent with produce input options
+	    if(options.time instanceof Date && !options.date) options.date = options.time;
+
+	    var msgData = [];
+	    if(!options.date instanceof Date) {
+	        options.date = new Date(Date());
+	    }
+	    
+	    if(!options.facility) options.facility = this.facility;
+
+	    if(this.type == 'RFC5424') {
+	        if(options.hasOwnProperty('prival') && options.prival >= 0 && options.prival <= 191) {
+	          var prival = '<' + options.prival + '>1';
+	        }
+	        else {
+	          var prival = calculatePrival({ 
+	            facility: options.facility,
+	            severity: options.severity,
+	            version:  1
+	          });
+	        }
+
+	        if(prival === false) return false;
+
+	        msgData.push(prival);
+	        msgData.push(generateDate(options.date));
+
+	        msgData.push(options.host    || this.host    || '-');
+	        msgData.push(options.appName || this.appName || '-');
+	        msgData.push(options.pid     || this.pid     || '-');
+	        msgData.push(options.msgID   || this.msgID   || '-');
+	        if(options.structuredData) {
+	            msgData.push(generateStructuredData(options.structuredData) || '-');
+	        } else {
+	            msgData.push('-');
+	        }
+
+	        if(!options.message) options.message = '-';
+
+	    } else {
+	        options.timestamp = generateBSDDate(options.date);    
+	        msgData.push(
+	            calculatePrival({ 
+	                facility: options.facility,
+	                severity: options.severity
+	            }) + options.timestamp
+	        );
+
+	        msgData.push(options.host || this.host);
+	        msgData.push();
+	        if(options.appName || this.appName) {
+	            var app = options.appName || this.appName;
+	            var pid = options.pid     || this.pid;
+
+	            if(parseInt(pid, 10)) {
+	                msgData.push(app + '[' + pid + ']:');
+	            } else {
+	                msgData.push(app + ':');
+	            }
+	        }
+	    }
+
+	    var compiledMessage = msgData.filter(function (messageElement) {
+	        // Filter null/ undefined values
+	        return messageElement;
+	    }).map(function (messageElement) {
+	        // Trim messages to remove successive whitespace
+	        return String(messageElement).trim();
+	    }).join(' ');
+	    compiledMessage += ' ' + options.message || '';
+	    msgData.push(compiledMessage);
+
+	    if(callback) {
+	        return callback(compiledMessage);
+	    } else {
+	        return compiledMessage;
+	    }
+
+	};
+
+
+	/*
+	 *  @param {Object} options object containing details of the message with
+	 *      the severity as 'debug'
+	 *  @param {Function} callback a callback run once the message is built
+	 *  @return {String} compiledMessage on completion, false on failure
+	 */
+	GlossyProducer.prototype.debug = function(options, callback) {
+	    options.severity = 'debug';
+	    return this.produce(options, callback);
+	};
+
+
+	/*
+	 *  @param {Object} options object containing details of the message with
+	 *      the severity as 'info'
+	 *  @param {Function} callback a callback run once the message is built
+	 *  @return {String} compiledMessage on completion, false on failure
+	 */
+	GlossyProducer.prototype.info = function(options, callback) {
+	    options.severity = 'info';
+	    return this.produce(options, callback);
+	};
+
+
+	/*
+	 *  @param {Object} options object containing details of the message with
+	 *      the severity as 'notice'
+	 *  @param {Function} callback a callback run once the message is built
+	 *  @return {String} compiledMessage on completion, false on failure
+	 */
+	GlossyProducer.prototype.notice = function(options, callback) {
+	    options.severity = 'notice';
+	    return this.produce(options, callback);
+	};
+
+
+	/*
+	 *  @param {Object} options object containing details of the message with
+	 *      the severity as 'warn'
+	 *  @param {Function} callback a callback run once the message is built
+	 *  @return {String} compiledMessage on completion, false on failure
+	 */
+	GlossyProducer.prototype.warn = function(options, callback) {
+	    options.severity = 'warn';
+	    return this.produce(options, callback);
+	};
+
+
+	/*
+	 *  @param {Object} options object containing details of the message with
+	 *      the severity as 'crit'
+	 *  @param {Function} callback a callback run once the message is built
+	 *  @return {String} compiledMessage on completion, false on failure
+	 */
+	GlossyProducer.prototype.crit = function(options, callback) {
+	    options.severity = 'crit';
+	    return this.produce(options, callback);
+	};
+
+
+	/*
+	 *  @param {Object} options object containing details of the message with
+	 *      the severity as 'alert'
+	 *  @param {Function} callback a callback run once the message is built
+	 *  @return {String} compiledMessage on completion, false on failure
+	 */
+	GlossyProducer.prototype.alert = function(options, callback) {
+	    options.severity = 'alert';
+	    return this.produce(options, callback);
+	};
+
+
+	/*
+	 *  @param {Object} options object containing details of the message with
+	 *      the severity as 'emergency'
+	 *  @param {Function} callback a callback run once the message is built
+	 *  @return {String} compiledMessage on completion, false on failure
+	 */
+	GlossyProducer.prototype.emergency = function(options, callback) {
+	    options.severity = 'emergency';
+	    return this.produce(options, callback);
+	};
+
+
+	/*
+	 *  Prepend a zero to a number less than 10
+	 *  @param {Number} n
+	 *  @return {String}
+	 *
+	 *  Where's sprintf when you need it?
+	 */
+	function leadZero(n) {
+	    if(typeof n != 'number') return n;
+	    n = n < 10 ? '0' + n : n ;
+	    return n;
+	}
+
+
+	/*
+	 *  Get current date in RFC 3164 format. If no date is supplied, the default
+	 *  is the current time in GMT + 0.
+	 *  @param {Date} dateObject optional Date object
+	 *  @returns {String}
+	 *
+	 *  Features code taken from https://github.com/akaspin/ain
+	 */
+	function generateBSDDate(dateObject) {
+	    if(!(dateObject instanceof Date)) dateObject = new Date(Date());
+	    var hours   = leadZero(dateObject.getHours());
+	    var minutes = leadZero(dateObject.getMinutes());
+	    var seconds = leadZero(dateObject.getSeconds());
+	    var month   = dateObject.getMonth();
+	    var day     = dateObject.getDate();
+	    if(day < 10) (day = ' ' + day);
+	    return BSDDateIndex[month] + " " + day + " " + hours + ":" + minutes + ":" + seconds;
+	}
+
+
+	/*
+	 *  Generate date in RFC 3339 format. If no date is supplied, the default is
+	 *  the current time in GMT + 0.
+	 *  @param {Date} dateObject optional Date object
+	 *  @returns {String} formatted date
+	 */
+	function generateDate(dateObject) {
+	    if(!(dateObject instanceof Date)) dateObject = new Date(Date());
+	    
+	    // Calcutate the offset
+	    var timeOffset;
+	    var minutes = Math.abs(dateObject.getTimezoneOffset());
+	    var hours = 0;
+	    while(minutes >= 60) {
+	        hours++;
+	        minutes -= 60;
+	    }
+
+	    if(dateObject.getTimezoneOffset() < 0) {
+	        // Ahead of UTC
+	        timeOffset = '+' + leadZero(hours) + '' + ':' + leadZero(minutes);
+	    } else if(dateObject.getTimezoneOffset() > 0) {
+	        // Behind UTC
+	        timeOffset = '-' + leadZero(hours) + '' + ':' + leadZero(minutes);
+	    } else {
+	        // UTC
+	        timeOffset = 'Z';
+	    }
+
+
+	    // Date
+	    formattedDate = dateObject.getUTCFullYear()         + '-' +
+	    // N.B. Javascript Date objects return months of the year indexed from
+	    // zero, while the RFC 5424 syslog standard expects months indexed from
+	    // one.
+	    leadZero(dateObject.getUTCMonth() + 1)  + '-' +
+	    // N.B. Javascript Date objects return days of the month indexed from one
+	    // (unlike months of year), so this does not need any correction.
+	    leadZero(dateObject.getUTCDate())   + 'T' +
+	    // Time
+	    leadZero(dateObject.getUTCHours())         + ':' +
+	    leadZero(dateObject.getUTCMinutes())       + ':' +
+	    leadZero(dateObject.getUTCSeconds())       + '.' +
+	    leadZero(dateObject.getUTCMilliseconds())  +
+	    timeOffset;
+	    
+	    return formattedDate;
+	    
+	}
+
+
+	/*
+	 *  Calculate the PRIVAL for a given facility
+	 *  @param {Object} values Contains the three key arguments
+	 *      facility {Number}/{String} the Facility Index
+	 *      severity {Number}
+	 *      version  {Number} For RFC 5424 messages, this should be 1
+	 *
+	 *  @return {String}
+	 */
+	function calculatePrival(values) {
+
+	    var pri = {};
+	    // Facility
+	    if(typeof values.facility == 'string' && !values.facility.match(/^\d+$/)) {
+	        pri.facility = FacilityIndex[values.facility.toLowerCase()];
+	    } else if( parseInt(values.facility, 10) && parseInt(values.facility, 10) < 24) {
+	        pri.facility = parseInt(values.facility, 10);
+	    }
+
+	    //Severity
+	    if(typeof values.severity == 'string' && !values.severity.match(/^\d+$/)) {
+	        pri.severity = SeverityIndex[values.severity.toLowerCase()];
+	    } else if( parseInt(values.severity, 10) && parseInt(values.severity, 10) < 8) {
+	        pri.severity = parseInt(values.severity, 10);
+	    }
+
+	    if(!isNaN(pri.severity) && !isNaN(pri.facility)) {
+	        pri.prival = (pri.facility * 8) + pri.severity;
+	        pri.str = values.version ? '<' + pri.prival + '>' + values.version : '<' + pri.prival + '>';
+	        return pri.str;
+	    } else {
+	        return false;
+	    }
+
+	}
+
+
+	/*
+	 *  Serialise objects into the structured data segment
+	 *  @param {Object} struct The object to serialise
+	 *  @return {String} structuredData the serialised data
+	 */
+	function generateStructuredData(struct) {
+	    if(typeof struct != 'object') return false;
+
+	    var structuredData = '';
+	    
+	    for(var sdID in struct) {
+	        sdElement = struct[sdID];
+	        structuredData += '[' + sdID;
+	        for(var key in sdElement) {
+	            sdElement[key] = sdElement[key].toString().replace(/(\]|\\|")/g, '\\$1');
+	            structuredData += ' ' + key + '="' + sdElement[key] + '"';
+	        }
+	        structuredData += ']';
+
+	    }
+
+	    return structuredData;
+	}
+
+	if(true) {
+	    module.exports = GlossyProducer;
+	}
+
+
+/***/ },
+/* 21 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/*
+	 *    Glossy Parser - Parse incoming syslog messages
+	 *
+	 *    Copyright Squeeks <privacymyass@gmail.com>.
+	 *    This is free software licensed under the MIT License - 
+	 *    see the LICENSE file that should be included with this package.
+	 */
+
+	/*
+	 *    These values replace the integers in message that define the facility.
+	 */
+	var FacilityIndex = [
+	    'kern',     // kernel messages
+	    'user',     // user-level messages
+	    'mail',     // mail system
+	    'daemon',   // system daemons
+	    'auth',     // security/authorization messages
+	    'syslog',   // messages generated internally by syslogd
+	    'lpr',      // line printer subsystem
+	    'news',     // network news subsystem
+	    'uucp',     // UUCP subsystem
+	    'clock',    // clock daemon
+	    'sec',      // security/authorization messages
+	    'ftp',      // FTP daemon
+	    'ntp',      // NTP subsystem
+	    'audit',    // log audit
+	    'alert',    // log alert
+	    'clock',    // clock daemon (note 2)
+	    'local0',   // local use 0  (local0)
+	    'local1',   // local use 1  (local1)
+	    'local2',   // local use 2  (local2)
+	    'local3',   // local use 3  (local3)
+	    'local4',   // local use 4  (local4)
+	    'local5',   // local use 5  (local5)
+	    'local6',   // local use 6  (local6)
+	    'local7'    // local use 7  (local7)
+	];
+
+	// Note 1 - Various operating systems have been found to utilize
+	//           Facilities 4, 10, 13 and 14 for security/authorization,
+	//           audit, and alert messages which seem to be similar. 
+
+	// Note 2 - Various operating systems have been found to utilize
+	//           both Facilities 9 and 15 for clock (cron/at) messages.
+
+	/*
+	 *    These values replace the integers in message that define the severity.
+	 */
+	var SeverityIndex = [
+	    'emerg',    // Emergency: system is unusable
+	    'alert',    // Alert: action must be taken immediately
+	    'crit',     // Critical: critical conditions
+	    'err',      // Error: error conditions
+	    'warn',     // Warning: warning conditions
+	    'notice',   // Notice: normal but significant condition
+	    'info',     // Informational: informational messages
+	    'debug'     // Debug: debug-level messages
+	];
+
+	/*
+	 *    Defines the range matching BSD style months to integers.
+	 */
+	var BSDDateIndex = {
+	    'Jan': 0,
+	    'Feb': 1,
+	    'Mar': 2,
+	    'Apr': 3,
+	    'May': 4,
+	    'Jun': 5,
+	    'Jul': 6,
+	    'Aug': 7,
+	    'Sep': 8,
+	    'Oct': 9,
+	    'Nov': 10,
+	    'Dec': 11
+	};
+
+	// These values match the hasing algorithm values as defined in RFC 5848
+	var signedBlockValues = {
+
+	    // Section 4.2.1
+	    hashAlgorithm: [
+	        null,
+	        'SHA1',
+	        'SHA256'
+	    ],
+
+	    // Section 5.2.1
+	    keyBlobType: {
+	        'C': 'PKIX Certificate',
+	        'P': 'OpenPGP KeyID',
+	        'K': 'Public Key',
+	        'N': 'No key information',
+	        'U': 'Unknown'
+	    }
+
+	};
+
+	var GlossyParser = function() {};
+
+	/*  
+	 *  Parse the raw message received.
+	 *
+	 *  @param {String/Buffer} rawMessage Raw message received from socket
+	 *  @param {Function} callback Callback to run after parse is complete
+	 *  @return {Object} map containing all successfully parsed data.
+	 */
+	GlossyParser.prototype.parse = function(rawMessage, callback) {
+
+	    // Are you node.js? Is this a Buffer?
+	    if(typeof Buffer == 'function' && Buffer.isBuffer(rawMessage)) {
+	        rawMessage = rawMessage.toString('utf8', 0);
+	    } else if(typeof rawMessage != 'string') {
+	        return rawMessage;
+	    }
+
+	    // Always return the original message
+	    var parsedMessage = {
+	        originalMessage: rawMessage
+	    };
+	    
+	    var segments = rawMessage.split(' ');
+	    if(segments.length < 2) return parsedMessage;
+	    var priKeys = this.decodePri(segments[0]);
+	    if(priKeys) {
+	        for (var key in priKeys) parsedMessage[key] = priKeys[key];
+	    }
+
+	    var timeStamp;
+	    //TODO Could our detection between 3164/5424 be improved?
+	    if(segments[0].match(/^(<\d+>\d)$/))  {
+	        segments.shift(); // Shift the prival off
+	        timeStamp             = segments.shift();
+	        parsedMessage.type    = 'RFC5424';
+	        parsedMessage.time    = this.parseTimeStamp(timeStamp);
+	        parsedMessage.host    = this.decideValue(segments.shift());
+	        parsedMessage.appName = this.decideValue(segments.shift());
+	        parsedMessage.pid     = this.decideValue(segments.shift());
+	        parsedMessage.msgID   = this.decideValue(segments.shift());
+
+	        if(segments[0] !== '-') {
+	            var spliceMarker = 0;
+	            for (i = segments.length -1; i > -1; i--) {
+	                if(segments[i].substr(-1) === ']'){
+	                    spliceMarker = i;
+	                    spliceMarker++;
+	                    break;
+	                }
+	            }
+	            if(spliceMarker !== 0) {
+	                var sd = segments.splice(0, spliceMarker).join(' ');
+	                parsedMessage.structuredData = this.parseStructure(sd);
+
+	                if(parsedMessage.structuredData.ssign) {
+	                    parsedMessage.structuredData.signedBlock = 
+	                        this.parseSignedBlock(parsedMessage.structuredData);
+	                } else if(parsedMessage.structuredData['ssign-cert']) {
+	                    parsedMessage.structuredData.signedBlock = 
+	                        this.parseSignedCertificate(parsedMessage.structuredData);
+	                }
+
+	            }
+	        } else {
+	            segments.shift(); // Shift the SD marker off
+	        }
+	        parsedMessage.message = segments.join(' ');
+
+	    } else if (segments[0].match(/^(<\d+>\d+:)$/)) {
+	        parsedMessage.type    = 'RFC3164';
+	        timeStamp             = segments.splice(0,1).join(' ').replace(/^(<\d+>)/,'');
+	        parsedMessage.time    = this.parseBsdTime(timeStamp);
+	        parsedMessage.message = segments.join(' ');
+
+	    } else if(segments[0].match(/^(<\d+>\w+)/)) {
+	        parsedMessage.type    = 'RFC3164';
+	        if (segments[1] === '') segments.splice(1,1);
+	        timeStamp             = segments.splice(0,3).join(' ').replace(/^(<\d+>)/,'');
+	        parsedMessage.time    = this.parseBsdTime(timeStamp);
+	        parsedMessage.host    = segments.shift();
+	        parsedMessage.message = segments.join(' ');
+	    }
+
+	    if(callback) {
+	        callback(parsedMessage);
+	    } else {
+	        return parsedMessage;
+	    }
+
+	};
+
+	/*
+	 *  RFC5424 messages are supposed to specify '-' as the null value
+	 *  @param {String} a section from an RFC5424 message
+	 *  @return {Boolean/String} null if string is entirely '-', or the original value
+	 */
+	GlossyParser.prototype.decideValue = function(value) {
+	    return value === '-' ? null : value;
+	};
+
+	/*
+	 *  Parses the PRI value from the start of message
+	 *
+	 *  @param {String} message Supplied raw primary value and version
+	 *  @return {Object} Returns object containing Facility, Severity and Version
+	 *      if correctly parsed, empty values on failure.
+	 */
+	GlossyParser.prototype.decodePri = function(message) {
+	    if(typeof message != 'string') return;
+
+	    var privalMatch = message.match(/^<(\d+)>/);
+	    if(!privalMatch) return false;
+
+	    var returnVal = {
+	        prival: parseInt(privalMatch[1], 10)
+	    };
+
+	    if(privalMatch[2]) returnVal.versio = parseInt(privalMatch[2], 10);
+
+	    if(returnVal.prival && returnVal.prival >= 0 && returnVal.prival <= 191) {
+	    
+	        returnVal.facilityID = parseInt(returnVal.prival / 8, 10);
+	        returnVal.severityID = returnVal.prival - (returnVal.facilityID * 8);
+
+	        if(returnVal.facilityID < 24 && returnVal.severityID < 8) {
+	            returnVal.facility = FacilityIndex[returnVal.facilityID];
+	            returnVal.severity = SeverityIndex[returnVal.severityID];
+	        }
+	    } else if(returnVal.prival >= 191) {
+	        return false;
+	    }
+
+	    return returnVal;
+	};
+
+
+	/*
+	 *  Attempts to parse a given timestamp
+	 *  @param {String} timeStamp Supplied timestamp, should only be the timestamp, 
+	 *      not the entire message
+	 *  @return {Object} Date object on success
+	 */
+	GlossyParser.prototype.parseTimeStamp = function(timeStamp) {
+	    
+	    if(typeof timeStamp != 'string') return;
+	    var parsedTime;
+
+	    parsedTime = this.parse8601(timeStamp);
+	    if(parsedTime) return parsedTime;
+
+	    parsedTime = this.parseRfc3339(timeStamp);
+	    if(parsedTime) return parsedTime;
+
+	    parsedTime = this.parseBsdTime(timeStamp);
+	    if(parsedTime) return parsedTime;
+
+	    return parsedTime;
+
+	};
+
+	/*
+	 *  Parse RFC3339 style timestamps
+	 *  @param {String} timeStamp
+	 *  @return {Date/false} Timestamp, if parsed correctly
+	 *  @see http://blog.toppingdesign.com/2009/08/13/fast-rfc-3339-date-processing-in-javascript/
+	 */
+	GlossyParser.prototype.parseRfc3339 = function(timeStamp){
+	    var utcOffset, offsetSplitChar, offsetString,
+	        offsetMultiplier = 1,
+	        dateTime = timeStamp.split("T");
+	        if(dateTime.length < 2) return false;
+
+	        var date    = dateTime[0].split("-"),
+	        time        = dateTime[1].split(":"),
+	        offsetField = time[time.length - 1];
+
+	    offsetFieldIdentifier = offsetField.charAt(offsetField.length - 1);
+	    if (offsetFieldIdentifier === "Z") {
+	        utcOffset = 0;
+	        time[time.length - 1] = offsetField.substr(0, offsetField.length - 2);
+	    } else {
+	        if (offsetField[offsetField.length - 1].indexOf("+") != -1) {
+	            offsetSplitChar = "+";
+	            offsetMultiplier = 1;
+	        } else {
+	            offsetSplitChar = "-";
+	            offsetMultiplier = -1;
+	        }
+
+	        offsetString = offsetField.split(offsetSplitChar);
+	        if(offsetString.length < 2) return false;
+	        time[(time.length - 1)] = offsetString[0];
+	        offsetString = offsetString[1].split(":");
+	        utcOffset    = (offsetString[0] * 60) + offsetString[1];
+	        utcOffset    = utcOffset * 60 * 1000;
+	    }
+	               
+	    var parsedTime = new Date(Date.UTC(date[0], date[1] - 1, date[2], time[0], time[1], time[2]) + (utcOffset * offsetMultiplier ));
+	    return parsedTime;
+	};
+
+	/*
+	 *  Parse "BSD style" timestamps, as defined in RFC3164
+	 *  @param {String} timeStamp
+	 *  @return {Date/false} Timestamp, if parsed correctly
+	 */
+	GlossyParser.prototype.parseBsdTime = function(timeStamp) {
+	    var parsedTime;
+	    var d = timeStamp.match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+(\d{1,2})\s+(\d{2}):(\d{2}):(\d{2})/);
+	    if(d) {
+	        // Years are absent from the specification, use this year
+	        currDate   = new Date();
+	        parsedTime = new Date(
+	            currDate.getUTCFullYear(), 
+	            BSDDateIndex[ d[1] ], 
+	            d[2], 
+	            d[3], 
+	            d[4], 
+	            d[5]);
+	    }
+
+	    return parsedTime;
+	};
+
+	/*
+	 *  Parse ISO 8601 timestamps
+	 *  @param {String} timeStamp
+	 *  @return {Object/false} Timestamp, if successfully parsed
+	 */
+	GlossyParser.prototype.parse8601 = function(timeStamp) {
+	    var parsedTime = new Date(Date.parse(timeStamp));
+	    if(parsedTime.toString() === 'Invalid Date') return; //FIXME not the best
+	    return parsedTime;
+	};
+
+
+	/*
+	 *  Parse the structured data out of RFC5424 messages
+	 *  @param {String} msg The STRUCTURED-DATA section
+	 *  @return {Object} sdStructure parsed structure
+	 */
+	GlossyParser.prototype.parseStructure = function(msg) {
+	    var sdStructure = { };
+
+	    var state   = 0,
+	        ignore  = false,
+	        sdId    = '',
+	        sdParam = '',
+	        sdValue = '';
+
+	    /*
+	     * Build the structure using a horrible FSM.
+	     * The states we cycle are as following:
+	     *   0 1    2       34       20
+	     *     [sdID sdParam="sdValue"]
+	     */
+	    for(var i = 0; i < msg.length; i++) {
+	        var c = msg[i];
+	        switch(state) {
+	            case 0:  // SD-ELEMENT
+	                state = (c === '[') ? 1 : 0;
+	                break;
+	            case 1: // SD-ID
+	                if(c != ' ') {
+	                    sdId += c;
+	                } else {
+	                    sdStructure[sdId] = {};
+	                    state = 2;
+	                }
+	                break;
+	            case 2: // SD-PARAM
+	                if(c === '=') {
+	                    sdStructure[sdId][sdParam] = '';
+	                    state = 3;
+	                } else if(c === ']') {
+	                    sdId  = '';
+	                    state = 0;
+	                } else if(c != ' '){
+	                    sdParam += c;
+	                }
+	                break;
+	            case 3: // SD-PARAM/SD-VALUE
+	                state = c === '"' ? 4 : null; // FIXME Handle rubbish better
+	                break;
+	            case 4: // SD-VALUE
+	                if(c === '\\' && !ignore) {
+	                    ignore = true;
+	                } else if(c === '"' && !ignore) {
+	                    sdStructure[sdId][sdParam] = sdValue;
+	                    sdParam = '', sdValue = '';
+	                    state = 2;
+	                } else {
+	                    sdValue += c;
+	                    ignore = false;
+	                }
+	                break;
+	            default:
+	                break;
+	        }
+	    }
+	    return sdStructure;
+	};
+
+
+	/*
+	 *  Make sense of signed block messages
+	 *  @param {Object} block the parsed structured data containing signed data
+	 *  @return {Object} validatedBlock translated and named values, binary
+	 *      elements will be Buffer objects, if available
+	 */
+	GlossyParser.prototype.parseSignedBlock = function(block) {
+
+	    if(typeof block != 'object') return false;
+
+	    var signedBlock    = { };
+	    var validatedBlock = { };
+	    // Figure out where in the object the keys live...
+	    if(block.structuredData && block.structuredData.ssign) {
+	        signedBlock = block.structuredData.ssign;
+	    } else if(block.ssign) {
+	        signedBlock = block.ssign;
+	    } else if(block.VER) {
+	        signedBlock = block;
+	    } else {
+	        return false;
+	    }
+
+	    var versionMatch = signedBlock.VER.match(/^(\d{2})(\d|\w)(\d)$/);
+	    if(versionMatch !== null) {
+	        validatedBlock.version        = versionMatch[1];
+	        validatedBlock.hashAlgorithm  = parseInt(versionMatch[2], 10);
+	        validatedBlock.hashAlgoString = signedBlockValues.hashAlgorithm[validatedBlock.hashAlgorithm];
+	        validatedBlock.sigScheme      = parseInt(versionMatch[3], 10);
+	    }
+
+	    validatedBlock.rebootSessionID   = parseInt(signedBlock.RSID, 10);
+	    validatedBlock.signatureGroup    = parseInt(signedBlock.SG, 10);
+	    validatedBlock.signaturePriority = parseInt(signedBlock.SPRI, 10);
+	    validatedBlock.globalBlockCount  = parseInt(signedBlock.GBC, 10);
+	    validatedBlock.firstMsgNumber    = parseInt(signedBlock.FMN, 10);
+	    validatedBlock.msgCount          = parseInt(signedBlock.CNT, 10);
+	    validatedBlock.hashBlock         = signedBlock.HB.split(/\s/);
+
+	    // Check to see if we're in node or have a Buffer type
+	    if(typeof Buffer == 'function') {
+	        for(var hash in validatedBlock.hashBlock) {
+	            validatedBlock.hashBlock[hash] = new Buffer(
+	                validatedBlock.hashBlock[hash], encoding='base64'); 
+	        }
+	        validatedBlock.thisSignature = new Buffer(
+	            signedBlock.SIGN, encoding='base64');
+	    } else {
+	        validatedBlock.thisSignature = signedBlock.SIGN;
+	    }
+
+	    return validatedBlock;
+	    
+	};
+
+
+	/*
+	 *  Make sense of signed certificate messages
+	 *  @param {Object} block the parsed structured data containing signed data
+	 *  @return {Object} validatedBlock translated and named values, binary
+	 *      elements will be Buffer objects, if available
+	 */
+	GlossyParser.prototype.parseSignedCertificate = function(block) {
+
+	    if(typeof block != 'object') return false;
+
+	    var signedBlock    = { };
+	    var validatedBlock = { };
+	    // Figure out where in the object the keys live...
+	    if(block.structuredData && block.structuredData['ssign-cert']) {
+	        signedBlock = block.structuredData['ssign-cert'];
+	    } else if(block['ssign-cert']) {
+	        signedBlock = block['ssign-cert'];
+	    } else if(block.VER) {
+	        signedBlock = block;
+	    } else {
+	        return false;
+	    }
+
+	    var versionMatch = signedBlock.VER.match(/^(\d{2})(\d|\w)(\d)$/);
+	    if(versionMatch !== null) {
+	        validatedBlock.version        = versionMatch[1];
+	        validatedBlock.hashAlgorithm  = parseInt(versionMatch[2], 10);
+	        validatedBlock.hashAlgoString = signedBlockValues.hashAlgorithm[validatedBlock.hashAlgorithm];
+	        validatedBlock.sigScheme      = parseInt(versionMatch[3], 10);
+	    }
+
+	    validatedBlock.rebootSessionID     = parseInt(signedBlock.RSID, 10);
+	    validatedBlock.signatureGroup      = parseInt(signedBlock.SG, 10);
+	    validatedBlock.signaturePriority   = parseInt(signedBlock.SPRI, 10);
+	    validatedBlock.totalPayloadLength  = parseInt(signedBlock.TPBL, 10);
+	    validatedBlock.payloadIndex        = parseInt(signedBlock.INDEX, 10);
+	    validatedBlock.fragmentLength      = parseInt(signedBlock.FLEN, 10);
+
+	    var payloadFragment             = signedBlock.FRAG.split(/\s/);
+	    validatedBlock.payloadTimestamp = this.parseTimeStamp(payloadFragment[0]);
+	    validatedBlock.payloadType      = payloadFragment[1];
+	    validatedBlock.payloadName      = signedBlockValues.keyBlobType[payloadFragment[1]];
+
+	    if(typeof Buffer == 'function') {
+	        validatedBlock.keyBlob = new Buffer(
+	            payloadFragment[2], encoding='base64');
+	        validatedBlock.thisSignature = new Buffer(
+	            signedBlock.SIGN, encoding='base64');
+	    } else {
+	        validatedBlock.keyBlob       = payloadFragment[2];
+	        validatedBlock.thisSignature = signedBlock.SIGN;
+	    }
+
+	    return validatedBlock;
+
+	};
+
+
+	if(true) {
+	    module.exports = new GlossyParser();
+	}
+
+
+/***/ },
+/* 22 */
+/***/ function(module, exports) {
+
+	module.exports = require("util");
+
+/***/ }
+/******/ ]);

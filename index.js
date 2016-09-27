@@ -5,7 +5,7 @@ const useragent = require('useragent');
 const express = require('express');
 const Webtask = require('webtask-tools');
 const app = express();
-const Request = require('superagent');
+const Request = require('request');
 const memoizer = require('lru-memoizer');
 
 require('winston-papertrail').Papertrail;
@@ -147,8 +147,16 @@ const logTypes = {
     event: 'Success Exchange',
     level: 1 // Info
   },
+  'seccft': {
+    event: 'Success Exchange (Client Credentials)',
+    level: 1 // Info
+  },
   'feacft': {
     event: 'Failed Exchange',
+    level: 3 // Error
+  },
+  'feccft': {
+    event: 'Failed Exchange (Client Credentials)',
     level: 3 // Error
   },
   'f': {
@@ -292,51 +300,83 @@ const logTypes = {
   'fdu': {
     event: 'Failed User Deletion',
     level: 3 // Error
+  },
+  'fapi': {
+    event: 'Failed API Operation',
+    level: 3 // Error
+  },
+  'limit_wc': {
+    event: 'Blocked Account',
+    level: 3 // Error
+  },
+  'limit_mu': {
+    event: 'Blocked IP Address',
+    level: 3 // Error
+  },
+  'slo': {
+    event: 'Success Logout',
+    level: 1 // Info
+  },
+  'flo': {
+    event: ' Failed Logout',
+    level: 3 // Error
+  },
+  'sd': {
+    event: 'Success Delegation',
+    level: 1 // Info
+  },
+  'fd': {
+    event: 'Failed Delegation',
+    level: 3 // Error
   }
 };
 
 function getLogsFromAuth0 (domain, token, take, from, cb) {
   var url = `https://${domain}/api/v2/logs`;
 
-  Request
-    .get(url)
-    .set('Authorization', `Bearer ${token}`)
-    .set('Accept', 'application/json')
-    .query({ take: take })
-    .query({ from: from })
-    .query({ sort: 'date:1' })
-    .query({ per_page: take })
-    .end(function (err, res) {
-      if (err || !res.ok) {
-        console.log('Error getting logs', err);
-        cb(null, err);
-      } else {
-        console.log('x-ratelimit-limit: ', res.headers['x-ratelimit-limit']);
-        console.log('x-ratelimit-remaining: ', res.headers['x-ratelimit-remaining']);
-        console.log('x-ratelimit-reset: ', res.headers['x-ratelimit-reset']);
-        cb(res.body);
-      }
-    });
+  Request({
+    method: 'GET',
+    url: url,
+    json: true,
+    qs: {
+      take: take,
+      from: from,
+      sort: 'date:1',
+      per_page: take
+    },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: 'application/json'
+    }
+  }, (err, res, body) => {
+    if (err) {
+      console.log('Error getting logs', err);
+      cb(null, err);
+    } else {
+      cb(body);
+    }
+  });
 }
 
 const getTokenCached = memoizer({
   load: (apiUrl, audience, clientId, clientSecret, cb) => {
-    Request
-      .post(apiUrl)
-      .send({
+    Request({
+      method: 'POST',
+      url: apiUrl,
+      json: true,
+      body: {
         audience: audience,
         grant_type: 'client_credentials',
         client_id: clientId,
         client_secret: clientSecret
-      })
-      .type('application/json')
-      .end(function (err, res) {
-        if (err || !res.ok) {
-          cb(null, err);
-        } else {
-          cb(res.body.access_token);
-        }
-      });
+      }
+    }, (err, res, body) => {
+      if (err) {
+        cb(null, err);
+      } else {
+        cb(body.access_token);
+      }
+    });
   },
   hash: (apiUrl) => apiUrl,
   max: 100,

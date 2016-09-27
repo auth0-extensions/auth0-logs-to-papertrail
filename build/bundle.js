@@ -47,6 +47,10 @@ module.exports =
 
 	'use strict';
 
+	var _logTypes;
+
+	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 	var winston = __webpack_require__(1);
 	var async = __webpack_require__(2);
 	var moment = __webpack_require__(3);
@@ -54,10 +58,10 @@ module.exports =
 	var express = __webpack_require__(5);
 	var Webtask = __webpack_require__(6);
 	var app = express();
-	var Request = __webpack_require__(9);
-	var memoizer = __webpack_require__(10);
+	var Request = __webpack_require__(8);
+	var memoizer = __webpack_require__(9);
 
-	__webpack_require__(15).Papertrail;
+	__webpack_require__(14).Papertrail;
 
 	function lastLogCheckpoint(req, res) {
 	  var ctx = req.webtaskContext;
@@ -183,7 +187,7 @@ module.exports =
 	  });
 	}
 
-	var logTypes = {
+	var logTypes = (_logTypes = {
 	  's': {
 	    event: 'Success Login',
 	    level: 1 // Info
@@ -192,8 +196,16 @@ module.exports =
 	    event: 'Success Exchange',
 	    level: 1 // Info
 	  },
+	  'seccft': {
+	    event: 'Success Exchange (Client Credentials)',
+	    level: 1 // Info
+	  },
 	  'feacft': {
 	    event: 'Failed Exchange',
+	    level: 3 // Error
+	  },
+	  'feccft': {
+	    event: 'Failed Exchange (Client Credentials)',
 	    level: 3 // Error
 	  },
 	  'f': {
@@ -338,36 +350,73 @@ module.exports =
 	    event: 'Failed User Deletion',
 	    level: 3 // Error
 	  }
-	};
+	}, _defineProperty(_logTypes, 'fapi', {
+	  event: 'Failed API Operation',
+	  level: 3 // Error
+	}), _defineProperty(_logTypes, 'limit_wc', {
+	  event: 'Blocked Account',
+	  level: 3 // Error
+	}), _defineProperty(_logTypes, 'limit_mu', {
+	  event: 'Blocked IP Address',
+	  level: 3 // Error
+	}), _defineProperty(_logTypes, 'slo', {
+	  event: 'Success Logout',
+	  level: 1 // Info
+	}), _defineProperty(_logTypes, 'flo', {
+	  event: ' Failed Logout',
+	  level: 3 // Error
+	}), _defineProperty(_logTypes, 'sd', {
+	  event: 'Success Delegation',
+	  level: 1 // Info
+	}), _defineProperty(_logTypes, 'fd', {
+	  event: 'Failed Delegation',
+	  level: 3 // Error
+	}), _logTypes);
 
 	function getLogsFromAuth0(domain, token, take, from, cb) {
 	  var url = 'https://' + domain + '/api/v2/logs';
 
-	  Request.get(url).set('Authorization', 'Bearer ' + token).set('Accept', 'application/json').query({ take: take }).query({ from: from }).query({ sort: 'date:1' }).query({ per_page: take }).end(function (err, res) {
-	    if (err || !res.ok) {
+	  Request({
+	    method: 'GET',
+	    url: url,
+	    json: true,
+	    qs: {
+	      take: take,
+	      from: from,
+	      sort: 'date:1',
+	      per_page: take
+	    },
+	    headers: {
+	      Authorization: 'Bearer ' + token,
+	      Accept: 'application/json'
+	    }
+	  }, function (err, res, body) {
+	    if (err) {
 	      console.log('Error getting logs', err);
 	      cb(null, err);
 	    } else {
-	      console.log('x-ratelimit-limit: ', res.headers['x-ratelimit-limit']);
-	      console.log('x-ratelimit-remaining: ', res.headers['x-ratelimit-remaining']);
-	      console.log('x-ratelimit-reset: ', res.headers['x-ratelimit-reset']);
-	      cb(res.body);
+	      cb(body);
 	    }
 	  });
 	}
 
 	var getTokenCached = memoizer({
 	  load: function load(apiUrl, audience, clientId, clientSecret, cb) {
-	    Request.post(apiUrl).send({
-	      audience: audience,
-	      grant_type: 'client_credentials',
-	      client_id: clientId,
-	      client_secret: clientSecret
-	    }).type('application/json').end(function (err, res) {
-	      if (err || !res.ok) {
+	    Request({
+	      method: 'POST',
+	      url: apiUrl,
+	      json: true,
+	      body: {
+	        audience: audience,
+	        grant_type: 'client_credentials',
+	        client_id: clientId,
+	        client_secret: clientSecret
+	      }
+	    }, function (err, res, body) {
+	      if (err) {
 	        cb(null, err);
 	      } else {
-	        cb(res.body.access_token);
+	        cb(body.access_token);
 	      }
 	    });
 	  },
@@ -595,16 +644,10 @@ module.exports =
 
 /***/ },
 /* 9 */
-/***/ function(module, exports) {
-
-	module.exports = require("superagent");
-
-/***/ },
-/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(setImmediate) {const LRU = __webpack_require__(13);
-	const _ = __webpack_require__(14);
+	/* WEBPACK VAR INJECTION */(function(setImmediate) {const LRU = __webpack_require__(12);
+	const _ = __webpack_require__(13);
 	const lru_params =  [ 'max', 'maxAge', 'length', 'dispose', 'stale' ];
 
 	module.exports = function (options) {
@@ -678,13 +721,13 @@ module.exports =
 
 	  return result;
 	};
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(11).setImmediate))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(10).setImmediate))
 
 /***/ },
-/* 11 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(setImmediate, clearImmediate) {var nextTick = __webpack_require__(12).nextTick;
+	/* WEBPACK VAR INJECTION */(function(setImmediate, clearImmediate) {var nextTick = __webpack_require__(11).nextTick;
 	var apply = Function.prototype.apply;
 	var slice = Array.prototype.slice;
 	var immediateIds = {};
@@ -760,10 +803,10 @@ module.exports =
 	exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate : function(id) {
 	  delete immediateIds[id];
 	};
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(11).setImmediate, __webpack_require__(11).clearImmediate))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(10).setImmediate, __webpack_require__(10).clearImmediate))
 
 /***/ },
-/* 12 */
+/* 11 */
 /***/ function(module, exports) {
 
 	// shim for using process in browser
@@ -860,19 +903,19 @@ module.exports =
 
 
 /***/ },
-/* 13 */
+/* 12 */
 /***/ function(module, exports) {
 
 	module.exports = require("lru-cache");
 
 /***/ },
-/* 14 */
+/* 13 */
 /***/ function(module, exports) {
 
 	module.exports = require("lodash");
 
 /***/ },
-/* 15 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -886,11 +929,11 @@ module.exports =
 	 *
 	 */
 
-	var os = __webpack_require__(16),
-	    net = __webpack_require__(17),
-	    tls = __webpack_require__(18),
-	    syslogProducer = __webpack_require__(19).Produce,
-	    util = __webpack_require__(22),
+	var os = __webpack_require__(15),
+	    net = __webpack_require__(16),
+	    tls = __webpack_require__(17),
+	    syslogProducer = __webpack_require__(18).Produce,
+	    util = __webpack_require__(21),
 	    winston = __webpack_require__(1);
 
 	/**
@@ -1260,33 +1303,33 @@ module.exports =
 
 
 /***/ },
-/* 16 */
+/* 15 */
 /***/ function(module, exports) {
 
 	module.exports = require("os");
 
 /***/ },
-/* 17 */
+/* 16 */
 /***/ function(module, exports) {
 
 	module.exports = require("net");
 
 /***/ },
-/* 18 */
+/* 17 */
 /***/ function(module, exports) {
 
 	module.exports = require("tls");
 
 /***/ },
-/* 19 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
 	 *  Imports
 	 */
 
-	var producer = __webpack_require__(20);
-	var parser   = __webpack_require__(21);
+	var producer = __webpack_require__(19);
+	var parser   = __webpack_require__(20);
 
 	/*
 	 *  Exports
@@ -1296,7 +1339,7 @@ module.exports =
 
 
 /***/ },
-/* 20 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -1761,7 +1804,7 @@ module.exports =
 
 
 /***/ },
-/* 21 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/*
@@ -2287,7 +2330,7 @@ module.exports =
 
 
 /***/ },
-/* 22 */
+/* 21 */
 /***/ function(module, exports) {
 
 	module.exports = require("util");

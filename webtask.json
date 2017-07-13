@@ -4,9 +4,12 @@
   "version": "2.0.0",
   "author": "auth0",
   "description": "This extension will take all of your Auth0 logs and export them to Papertrail",
-  "type": "cron",
   "initialUrlPath": "/login",
-  "repository": "https://github.com/auth0/auth0-logs-to-papertrail",
+  "type": "cron",
+  "category": "log_export",
+  "repository": "https://github.com/auth0-extensions/auth0-logs-to-papertrail",
+  "docsUrl": "https://auth0.com/docs/extensions/papertrail",
+  "logoUrl": "https://cdn.auth0.com/extensions/auth0-logs-to-papertrail/assets/logo.png",
   "keywords": [
     "auth0",
     "extension"

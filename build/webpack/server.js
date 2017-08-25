@@ -11,6 +11,7 @@ const options = {
   hot: true,
   inline: true,
   historyApiFallback: true,
+  disableHostCheck: true,
   proxy: [
     {
       context: () => true,

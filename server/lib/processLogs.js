@@ -6,9 +6,9 @@ const loggingTools = require('auth0-log-extension-tools');
 const config = require('../lib/config');
 const logger = require('../lib/logger');
 
-require('winston-papertrail').Papertrail;
+require('winston-papertrail').Papertrail; // eslint-disable-line no-unused-expressions
 
-module.exports = (storage) =>
+module.exports = storage =>
   (req, res, next) => {
     const wtBody = (req.webtaskContext && req.webtaskContext.body) || req.body || {};
     const wtHead = (req.webtaskContext && req.webtaskContext.headers) || {};
@@ -35,14 +35,14 @@ module.exports = (storage) =>
 
       logger.info(`Sending ${logs.length} logs to Papertrail.`);
 
-      async.eachLimit(logs, 5, (log, cb) => {
+      return async.eachLimit(logs, 5, (log, cb) => {
         papertrail.info(JSON.stringify(log), cb);
       }, (err) => {
         if (err) {
           return callback(err);
         }
 
-        console.log('Upload complete.');
+        logger.info('Upload complete.');
         return callback();
       });
     };
@@ -96,12 +96,12 @@ module.exports = (storage) =>
           if (data.lastReportDate !== now && new Date().getHours() >= reportTime) {
             sendDailyReport(now);
           }
-        })
+        });
     };
 
     return auth0logger
       .run(onLogsReceived)
-      .then(result => {
+      .then((result) => {
         if (result && result.status && result.status.error) {
           slack.send(result.status, result.checkpoint);
         } else if (config('SLACK_SEND_SUCCESS') === true || config('SLACK_SEND_SUCCESS') === 'true') {
@@ -110,7 +110,7 @@ module.exports = (storage) =>
         checkReportTime();
         res.json(result);
       })
-      .catch(err => {
+      .catch((err) => {
         slack.send({ error: err, logsProcessed: 0 }, null);
         checkReportTime();
         next(err);
